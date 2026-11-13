@@ -673,7 +673,7 @@ Tiles are fetched directly with verified CORS, a 15-second per-request deadline,
 
 Map-coordinate conversions and validation live in the Explorer feature. Native projected nomenclature coordinates from NASA supply independent forward/inverse reference cases in `tests/fixtures/nasa-map-coordinate-references.json`. The map scale corrects for the projection and reports horizontal reference-sphere distance at the view center, rather than terrain-following distance. These map helpers do not define observer height, altitude datum, ephemeris frame or local astronomical axes; those remain in Rameen's scientific contract.
 
-`/api/lunar-locations` queries a fixed NASA nomenclature service, validates its coordinate system and payload, and returns at most eight map locations. The client debounces name searches and cancels stale responses; manually entered coordinates work independently of search availability. Selection opens a contextual inspector with an explicit UTC mission-time input and up to three candidate sites. The JSON export identifies coordinates and uncalculated analysis; it is not a mission report.
+`/api/lunar-locations` queries a fixed NASA nomenclature service, validates its coordinate system and payload, and returns at most eight map locations. The client debounces name searches and cancels stale responses; manually entered coordinates work independently of search availability. Selection opens a contextual inspector with an explicit UTC mission-time input and up to three candidate sites. The JSON export identifies map coordinates, selection, view settings and uncalculated analysis; it is not a mission report.
 
 ---
 
@@ -711,6 +711,10 @@ Sultan authorized an independent UI preview at `/comparison-preview` before Phas
 Start with React local state and URL search parameters.
 
 Use URL parameters for shareable or reload-persistent analysis settings where appropriate.
+
+Explorer stores its map selection, up to three candidates, entered UTC mission time and camera/layer settings in a versioned `session` query parameter. Native history updates preserve Next.js history metadata. The engine captures settled camera positions, and URL writes are debounced by 500 ms so panning and opacity changes do not repeatedly update history. Navigation and confirmed imports flush pending state first. Continuous interaction replaces the current entry; a confirmed candidate import creates one history entry so Back can restore the previous exploration. Reloads and history navigation validate the input before restoring sources, camera and markers together. Fullscreen, open popups and raster load/error status are transient and are not serialized.
+
+Shared state is bounded to 8,192 decoded characters. Candidate files are read locally, limited to 16,384 bytes and previewed before replacement; older Moonline candidate exports remain supported. The feature validates finite map coordinates, supported map conventions, unique sites, bounded labels, explicit minute-precision UTC/calendar values, known overlays, opacity and each source's published zoom limit. Polar camera coordinates are bounded to ±1 billion metres as an application input limit, without applying a coverage mask. Missing time remains null. Imported labels are user input, not newly verified NASA nomenclature, and no observer height/frame or scientific result is inferred.
 
 Examples:
 

@@ -167,6 +167,8 @@ The Phase 2 Explorer map fills the available viewport. Desktop navigation become
 
 Selecting a map location or search result opens a dismissible, nonmodal desktop inspector; mobile uses the existing Radix bottom sheet. The inspector contains coordinates, available nomenclature, an explicit UTC mission-time input and candidate actions. Up to three numbered candidate markers remain on the map. Fullscreen preserves the same map instance, controls and inspector; an expanded view provides a keyboard-accessible fallback when the native Fullscreen API is unavailable. Detailed source limitations, metadata and the published slope legend are disclosed in the layer panel. Tile loading, missing coverage and failures remain distinct, and retries preserve the view. Analysis, timelines and scientific comparison appear only after their calculations are implemented.
 
+The inspector provides candidate import/export and a copyable exploration link. Imports show coordinates and UTC time in a compact preview before replacing existing inputs; cancellation preserves the workspace, and Back restores the previous confirmed import. Copy failures reveal a selectable link. Shared links and reloads restore selection, candidates, time, camera and layers, while invalid shared state opens the default map with a dismissible error. Transfer controls also remain accessible in the mobile fullscreen sheet.
+
 ### 7.2 Site Analysis
 
 Purpose: understand conditions at one site over a selected interval.

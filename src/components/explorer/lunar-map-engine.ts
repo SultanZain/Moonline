@@ -36,6 +36,7 @@ import {
   type MoonTrekMode, type MoonTrekBasemap, type MoonTrekLayerId, type MoonTrekOverlayId,
 } from "@/config/moon-trek";
 import { isMapLocation, normalizeMapLongitude, projectMapLocation, unprojectMapLocation, type MapLocation } from "./lunar-map-coordinates";
+import type { ExplorerSession, ExplorerView } from "./explorer-session";
 
 export type LunarMapState = "loading" | "ready" | "partial" | "error" | "outside-grid" | "no-coverage" | "hidden";
 export type LunarMapSnapshot = {
@@ -43,9 +44,11 @@ export type LunarMapSnapshot = {
   basemap: MoonTrekBasemap;
   zoom: number;
   maxZoom: number;
+  view: ExplorerView;
   layers: { id: MoonTrekLayerId; state: LunarMapState; opacity: number; role: "base" | "overlay" }[];
 };
 export type LunarMapHandle = {
+  restoreSession: (session: ExplorerSession) => void;
   setMode: (mode: MoonTrekMode) => void;
   setBasemap: (basemap: MoonTrekBasemap) => void;
   setOverlay: (id: MoonTrekOverlayId, enabled: boolean) => void;
@@ -143,11 +146,13 @@ export function createLunarMap(
   let basemap: MoonTrekBasemap = "imagery";
   let view = views.global;
   let stopped = false;
+  let restoring = false;
   let base: SourceSlot;
   let selected: MapLocation | null = null;
   let candidates: readonly MapLocation[] = [];
   let zoomTarget: number | undefined;
   let lastSnapshot: string | undefined;
+  let settledCamera: { mode: MoonTrekMode; center: [number, number]; zoom: number } | undefined;
   const overlays = new Map<MoonTrekOverlayId, SourceSlot>();
   const enabled = new Set<MoonTrekOverlayId>();
   const opacity = new Map<MoonTrekOverlayId, number>();
@@ -176,11 +181,18 @@ export function createLunarMap(
   }
 
   function publish() {
-    if (stopped || !base) return;
+    if (stopped || restoring || !base) return;
     const zoom = view.getZoom();
-    if (zoom === undefined) return;
+    const [x, y] = view.getCenter() ?? [];
+    if (zoom === undefined || x === undefined || y === undefined) return;
+    // Keep React and URL state out of the pan/animation loop; moveend captures the final camera.
+    if (!settledCamera || settledCamera.mode !== mode || (!view.getAnimating() && !view.getInteracting())) {
+      settledCamera = { mode, center: [x, y], zoom: Math.round(zoom) };
+    }
     const snapshot: LunarMapSnapshot = {
       mode, basemap, zoom: Math.round(zoom), maxZoom: view.getMaxZoom(),
+      view: { mode, basemap, center: settledCamera.center, zoom: Math.min(settledCamera.zoom, view.getMaxZoom()),
+        overlays: moonTrekOverlayIds.filter(id => enabled.has(id)).map(id => ({ id, opacity: opacity.get(id) ?? 1 })) },
       layers: [
         { id: base.id, state: sourceState(base), opacity: 1, role: "base" },
         ...moonTrekOverlayIds.flatMap(id => {
@@ -354,6 +366,28 @@ export function createLunarMap(
   base = createSource("global-imagery", 0); publish();
 
   return {
+    restoreSession: session => {
+      // Restore sources, camera and markers together; intermediate views must not replace the URL.
+      restoring = true;
+      view.cancelAnimations(); base.abort();
+      for (const slot of overlays.values()) slot.abort();
+      overlays.clear(); enabled.clear(); opacity.clear(); zoomTarget = undefined;
+      mode = session.view.mode; basemap = session.view.basemap;
+      view = views[mode]; map.setView(view);
+      base = createSource(moonTrekBasemaps[mode][basemap], 0);
+      for (const overlay of session.view.overlays) {
+        enabled.add(overlay.id); opacity.set(overlay.id, overlay.opacity);
+        if (mode === "south") {
+          const slot = createSource(overlay.id, moonTrekOverlayIds.indexOf(overlay.id) + 1);
+          slot.layer.setOpacity(overlay.opacity); overlays.set(overlay.id, slot);
+        }
+      }
+      updateMaxZoom();
+      view.setCenter([...session.view.center]); view.setZoom(session.view.zoom);
+      selected = session.selected; candidates = session.sites;
+      updateMarker(); updateCandidates(); onCursor(null);
+      restoring = false; publish();
+    },
     setMode,
     setCandidates: locations => { candidates = locations.filter(isMapLocation).slice(0, 3); updateCandidates(); },
     setBasemap: next => {

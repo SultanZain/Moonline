@@ -15,7 +15,7 @@ export function MethodologyContent() {
       </header>
       <section className="scope-note" aria-labelledby="implementation-heading">
         <h2 id="implementation-heading">Current implementation</h2>
-        <p className="mt-2 text-sm leading-6 text-content-muted">Explorer displays NASA Moon Trek raster imagery with global and south-polar views, independent overlays, name search, coordinate navigation and candidate-site selection. Candidate exports contain map coordinates and the entered UTC mission time. Ephemeris retrieval, visibility timelines, scientific comparisons and mission reports are not connected. There are no scientific results in this workspace. The comparison preview uses clearly labelled synthetic UI fixtures.</p>
+        <p className="mt-2 text-sm leading-6 text-content-muted">Explorer displays NASA Moon Trek raster imagery with global and south-polar views, independent overlays, name search, coordinate navigation and candidate-site selection. Exploration links and candidate exports preserve map coordinates, view settings and the entered UTC mission time. Imports are previewed before loading; imported coordinates and labels remain user inputs and are not reverified against NASA nomenclature. Ephemeris retrieval, visibility timelines, scientific comparisons and mission reports are not connected. There are no scientific results in this workspace. The comparison preview uses clearly labelled synthetic UI fixtures.</p>
         <Link href="/comparison-preview" className="source-link mt-3">Explore the illustrative comparison <ArrowUpRight aria-hidden="true" /></Link>
       </section>
       <div className="methodology-grid">

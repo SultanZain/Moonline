@@ -5,12 +5,13 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Check, Copy, Download, LocateFixed, Plus, X } from "lucide-react";
+import { ArrowUpRight, Check, Copy, LocateFixed, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatMapCoordinates, type MapLocation } from "./lunar-map-coordinates";
+import { missionTimeToUtc } from "./explorer-session";
 
 type SiteContextProps = {
   location: MapLocation | null;
@@ -20,30 +21,21 @@ type SiteContextProps = {
   onNavigate: (location: MapLocation) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
+  children: ReactNode;
 };
 
-export function SiteContext({ location, candidates, missionTime, onTimeChange, onNavigate, onAdd, onRemove }: SiteContextProps) {
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+export function SiteContext({ location, candidates, missionTime, onTimeChange, onNavigate, onAdd, onRemove, children }: SiteContextProps) {
+  const [copyState, setCopyState] = useState<{ coordinates: string; status: "copied" | "error" } | null>(null);
+  const clipboardText = location ? `${location.latitude}, ${location.longitude}` : null;
+  const copied = clipboardText !== null && copyState?.coordinates === clipboardText && copyState.status === "copied";
+  const copyFailed = clipboardText !== null && copyState?.coordinates === clipboardText && copyState.status === "error";
   const saved = location !== null && candidates.some(site => site.latitude === location.latitude && site.longitude === location.longitude);
+  const timeInvalid = missionTime !== "" && missionTimeToUtc(missionTime) === null;
 
   async function copyCoordinates() {
-    if (!location) return;
-    try { await navigator.clipboard.writeText(`${location.latitude}, ${location.longitude}`); setCopyState("copied"); }
-    catch { setCopyState("error"); }
-  }
-
-  function exportCandidates() {
-    const timestamp = missionTime ? Date.parse(`${missionTime}Z`) : Number.NaN;
-    const blob = new Blob([JSON.stringify({
-      kind: "moonline-candidate-locations", coordinateSystem: "Moon 2000 spherical map",
-      latitudeUnit: "degrees", longitudeUnit: "degrees", longitudeDirection: "east",
-      missionTimeUtc: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
-      sites: candidates, analysis: { status: "not_calculated" },
-    }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url; anchor.download = "moonline-candidates.json"; anchor.click();
-    URL.revokeObjectURL(url);
+    if (clipboardText === null) return;
+    try { await navigator.clipboard.writeText(clipboardText); setCopyState({ coordinates: clipboardText, status: "copied" }); }
+    catch { setCopyState({ coordinates: clipboardText, status: "error" }); }
   }
 
   return (
@@ -51,8 +43,8 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
       {location ? (
         <>
           <div>
-            <p className="text-lg font-medium text-content">{location.name ?? "Selected location"}</p>
-            {location.featureType ? <p className="mt-1 text-xs text-content-muted">{location.featureType}</p> : null}
+            <p className="[overflow-wrap:anywhere] text-lg font-medium text-content">{location.name ?? "Selected location"}</p>
+            {location.featureType ? <p className="[overflow-wrap:anywhere] mt-1 text-xs text-content-muted">{location.featureType}</p> : null}
           </div>
           <dl className="site-coordinates">
             <div><dt>Latitude</dt><dd>{location.latitude.toFixed(4)}°</dd></div>
@@ -61,13 +53,15 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 px-3" onClick={() => onNavigate(location)}><LocateFixed aria-hidden="true" /> Locate</Button>
             <Button variant="outline" className="flex-1 px-3" onClick={() => void copyCoordinates()}>
-              {copyState === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />} Copy
+              {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />} Copy
             </Button>
           </div>
-          {copyState === "error" ? <p role="status" className="text-xs text-warning">Clipboard unavailable. Select the coordinates to copy.</p> : null}
+          {copyFailed ? <p role="status" className="text-xs text-warning">Clipboard unavailable. Select the coordinates to copy.</p> : null}
           <div className="space-y-2">
             <label htmlFor="mission-time" className="text-xs text-content-muted">Mission time · UTC</label>
-            <Input id="mission-time" type="datetime-local" step="60" value={missionTime} onChange={event => onTimeChange(event.target.value)} />
+            <Input id="mission-time" type="datetime-local" step="60" value={missionTime} aria-invalid={timeInvalid}
+              aria-describedby={timeInvalid ? "mission-time-error" : undefined} onChange={event => onTimeChange(event.target.value)} />
+            {timeInvalid ? <p id="mission-time-error" role="alert" className="text-xs text-warning">Enter a valid UTC date and time, to the minute.</p> : null}
           </div>
           <Button onClick={onAdd} disabled={saved || candidates.length >= 3}>
             {saved ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}
@@ -76,6 +70,8 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
           <p className="text-xs leading-5 text-content-muted">Sun and Earth analysis is not connected.</p>
         </>
       ) : <p className="text-sm leading-6 text-content-muted">Select a location on the map or search for coordinates.</p>}
+
+      {children}
 
       {candidates.length > 0 ? (
         <section aria-label="Candidate locations" className="candidate-section">
@@ -92,7 +88,6 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
               </li>
             ))}
           </ol>
-          <Button variant="outline" className="mt-3 w-full" onClick={exportCandidates}><Download aria-hidden="true" /> Export sites</Button>
         </section>
       ) : null}
       <Link href="/methodology" className="inline-flex min-h-11 items-center gap-2 text-xs text-content-muted underline underline-offset-4">Methodology <ArrowUpRight aria-hidden="true" /></Link>

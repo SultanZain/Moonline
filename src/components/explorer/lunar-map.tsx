@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ContextSheet } from "./context-sheet";
 import { SiteContext } from "./site-context";
+import { ExplorerSessionActions } from "./explorer-session-actions";
+import { emptyExplorerSession, explorerSessionLink, missionTimeToUtc, readExplorerSession, type CandidateImport, type ExplorerSession } from "./explorer-session";
 import { formatMapCoordinates, isMapLocation, type MapLocation } from "./lunar-map-coordinates";
 import {
   moonTrekBasemaps, moonTrekLayers, moonTrekLayerUrl, moonTrekMetadataUrl, moonTrekOverlayIds, moonTrekSlopeLegendUrl,
@@ -48,6 +50,7 @@ export function LunarMap() {
   const searchControls = useRef<HTMLDivElement>(null);
   const layersControls = useRef<HTMLDivElement>(null);
   const nativeFullscreen = useRef(false);
+  const urlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [unavailable, setUnavailable] = useState(false);
   const [snapshot, setSnapshot] = useState<LunarMapSnapshot | null>(null);
@@ -58,6 +61,7 @@ export function LunarMap() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [candidates, setCandidates] = useState<MapLocation[]>([]);
   const [missionTime, setMissionTime] = useState("");
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeResult, setActiveResult] = useState(-1);
@@ -81,6 +85,39 @@ export function LunarMap() {
     activeLayers[0]?.state === "no-coverage" ? "No imagery at this view" : "Imagery loaded · coverage varies";
   const searchResults = searchState.status === "ready" ? searchState.results : [];
   const showResults = searchOpen && query.trim().length >= 2 && searchState.status !== "idle";
+  const missionTimeUtc = missionTimeToUtc(missionTime);
+  const session: ExplorerSession | null = snapshot && (!missionTime || missionTimeUtc) ?
+    { version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view } : null;
+
+  function saveSessionUrl() {
+    if (urlTimer.current) clearTimeout(urlTimer.current);
+    urlTimer.current = null;
+    if (!session || window.location.pathname !== "/explorer") return;
+    const href = explorerSessionLink(session, window.location.href);
+    if (href === window.location.href) return;
+    try { window.history.replaceState(window.history.state, "", href); }
+    catch { setSessionError("Browser could not save this view. Use Copy exploration link to preserve it."); }
+  }
+  const saveFromEffect = useEffectEvent(() => saveSessionUrl());
+
+  function applySession(restored: ExplorerSession) {
+    controller.current?.restoreSession(restored);
+    setSelected(restored.selected); setCandidates(restored.sites); setMissionTime(restored.missionTimeUtc?.slice(0, 16) ?? "");
+    setLatitude(restored.selected ? String(restored.selected.latitude) : "");
+    setLongitude(restored.selected ? String(restored.selected.longitude) : "");
+    setInspectorOpen(restored.selected !== null || restored.sites.length > 0);
+    setQuery(restored.selected?.name ?? ""); resetSearch(); setPopup(null); setSearchOpen(false);
+    setSearchError(null); setCoordinateError(null);
+  }
+
+  const restoreFromHistory = useEffectEvent(() => {
+    if (!controller.current) return;
+    if (urlTimer.current) clearTimeout(urlTimer.current);
+    urlTimer.current = null;
+    const read = readExplorerSession(window.location.search);
+    applySession(read.status === "ready" ? read.session : emptyExplorerSession());
+    setSessionError(read.status === "invalid" ? "Invalid exploration link. The map opened at its default view." : null);
+  });
 
   const onSelection = useEffectEvent((location: MapLocation) => {
     setSelected(location); setInspectorOpen(true); setPopup(null); setSearchOpen(false);
@@ -99,11 +136,46 @@ export function LunarMap() {
         if (cursor.current) cursor.current.textContent = location ? formatMapCoordinates(location) : "—, —";
       }, onSelection);
       controller.current = handle;
+      restoreFromHistory();
     }).catch(() => { if (!cancelled) setUnavailable(true); });
-    return () => { cancelled = true; handle?.dispose(); controller.current = null; };
+    const onHistory = () => restoreFromHistory();
+    window.addEventListener("popstate", onHistory);
+    return () => { cancelled = true; window.removeEventListener("popstate", onHistory); handle?.dispose(); controller.current = null; };
   }, [attempt]);
 
   useEffect(() => { controller.current?.setCandidates(candidates); }, [candidates, initialized]);
+
+  useEffect(() => {
+    if (!snapshot || (missionTime && !missionTimeUtc)) return;
+    const href = explorerSessionLink({ version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view }, window.location.href);
+    if (href === window.location.href) return;
+    const timer = setTimeout(() => saveFromEffect(), 500);
+    urlTimer.current = timer;
+    return () => clearTimeout(timer);
+  }, [snapshot, selected, candidates, missionTime, missionTimeUtc]);
+
+  useEffect(() => {
+    const onLink = (event: MouseEvent) => { if (event.target instanceof Element && event.target.closest("a[href]")) saveFromEffect(); };
+    const onLeave = () => saveFromEffect();
+    document.addEventListener("click", onLink, true);
+    window.addEventListener("beforeunload", onLeave);
+    return () => { document.removeEventListener("click", onLink, true); window.removeEventListener("beforeunload", onLeave); };
+  }, []);
+
+  function importCandidates(imported: CandidateImport) {
+    // Keep the previous exploration reachable through Back after a confirmed import.
+    setSessionError(null);
+    saveSessionUrl();
+    try { window.history.pushState(window.history.state, "", window.location.href); }
+    catch { setSessionError("Browser could not keep the previous view. Use Copy exploration link to preserve inputs."); }
+    if (imported.view) applySession({ ...imported, version: 1, view: imported.view });
+    else {
+      setCandidates(imported.sites); setMissionTime(imported.missionTimeUtc?.slice(0, 16) ?? "");
+      controller.current?.setCandidates(imported.sites);
+      const location = imported.selected ?? imported.sites[0];
+      if (location) navigate(location);
+    }
+  }
 
   useEffect(() => {
     const onChange = () => {
@@ -274,6 +346,8 @@ export function LunarMap() {
           </div>
         ) : null}
         {searchError ? <p id="lunar-search-error" role="alert" className="map-input-error map-surface">{searchError}</p> : null}
+        {sessionError ? <div className="map-input-error map-surface flex items-center gap-2"><p role="alert" className="flex-1">{sessionError}</p>
+          <Button variant="ghost" size="icon" aria-label="Dismiss link error" title="Dismiss link error" onClick={() => setSessionError(null)}><X aria-hidden="true" /></Button></div> : null}
         {popup === "coordinates" ? (
           <form id="map-coordinate-form" onSubmit={submitCoordinates} noValidate className="map-coordinate-form map-surface" aria-label="Coordinate navigation">
             <div className="flex items-center justify-between"><h3 className="text-sm font-medium">Go to coordinates</h3>
@@ -348,10 +422,12 @@ export function LunarMap() {
       {fullscreenError ? <p role="alert" className="map-fullscreen-error map-surface">{fullscreenError}</p> : null}
 
       <ContextSheet open={inspectorOpen} onOpenChange={setInspectorOpen} container={rootElement} onReturnFocus={() => inspectorButton.current?.focus()}>
-        <SiteContext key={selected ? `${selected.latitude}/${selected.longitude}` : "empty"} location={selected} candidates={candidates} missionTime={missionTime}
+        <SiteContext location={selected} candidates={candidates} missionTime={missionTime}
           onTimeChange={setMissionTime} onNavigate={navigate} onAdd={() => {
             if (selected && candidates.length < 3 && !candidates.some(site => site.latitude === selected.latitude && site.longitude === selected.longitude)) setCandidates(sites => [...sites, selected]);
-          }} onRemove={index => setCandidates(sites => sites.filter((_, item) => item !== index))} />
+          }} onRemove={index => setCandidates(sites => sites.filter((_, item) => item !== index))}>
+          <ExplorerSessionActions session={session} ready={initialized} hasCurrentWork={selected !== null || candidates.length > 0 || missionTime !== ""} onImport={importCandidates} />
+        </SiteContext>
       </ContextSheet>
 
       <Button ref={inspectorButton} variant="outline" className="map-site-trigger map-surface bg-surface" title="Open site inspector" aria-label="Open site inspector" aria-expanded={inspectorOpen}
