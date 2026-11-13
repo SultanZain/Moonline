@@ -80,7 +80,7 @@ Sun and Earth colors must remain consistent across cards, map markers, legends, 
 
 The central tokens are implemented in `src/app/globals.css`. The initial canvas is `#0b0b0b`, panels are `#151515`, and raised surfaces are `#242424`. Text uses `#f5f5f3`, `#b4b4b4`, and `#949494`. Selected-site/focus emphasis is `#d4e56a`; Sun is `#f2b544`; Earth is `#68cadd`. Primary buttons use inverted neutral text/surface colors. Control borders use `#737373` to distinguish interactive edges from structural borders.
 
-DM Sans weights 400, 500, and 600 are served locally. Controls have a 6px radius and a minimum 44px target. The labelled 224px desktop sidebar folds into a Radix navigation sheet below 1024px. Explorer context moves below the main workspace below 1280px; panels use 24px spacing on desktop and 16px on mobile.
+DM Sans weights 400, 500, and 600 are served locally. Controls have a 6px radius and a minimum 44px target. The labelled 224px desktop sidebar folds into a Radix navigation sheet below 1024px. Explorer context appears in a right-side Radix sheet below 1280px and beside the workspace at wider widths; panels use 24px spacing on desktop and 16px on mobile. The context sheet closes when the permanent desktop panel becomes visible and moves focus to the workspace; normal dismissal restores focus to its trigger.
 
 ## 4. Typography
 

@@ -23,7 +23,7 @@ export function MobileNavigation() {
             <Menu aria-hidden="true" />
           </Button>
         </SheetTrigger>
-        <SheetContent>
+        <SheetContent closeLabel="Close navigation">
           <SheetTitle>Moonline navigation</SheetTitle>
           <SheetDescription>Lunar exploration workspace</SheetDescription>
           <Navigation onNavigate={() => setOpen(false)} />
