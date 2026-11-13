@@ -1,0 +1,29 @@
+name: PR ownership
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ownership-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ownership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out trusted base code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Check contributor ownership
+        run: node scripts/pr-ownership.ts

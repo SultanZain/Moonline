@@ -23,7 +23,7 @@ Open http://localhost:3000. No environment variables are required for Phase 1. D
 pnpm verify
 ```
 
-This runs TypeScript checks, ESLint, a production build, and browser tests against that build. Individual checks are available as `pnpm typecheck`, `pnpm lint`, `pnpm build`, and `pnpm test`. Build before running the browser tests independently.
+This runs TypeScript checks, ESLint, contributor ownership tests, a production build, and browser tests against that build. Individual checks are available as `pnpm typecheck`, `pnpm lint`, `pnpm test:ownership`, `pnpm build`, and `pnpm test`. Build before running the browser tests independently.
 
 Tests use the installed Microsoft Edge browser on Windows. On other platforms, install Playwright Chromium with `pnpm exec playwright install chromium` before running tests. Browser tests cover navigation, availability labels, skip-link focus, the mobile menu's focus trap and Escape behavior, and horizontal overflow at desktop, tablet, and mobile widths.
 
