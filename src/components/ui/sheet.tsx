@@ -18,17 +18,18 @@ export function SheetTrigger(props: ComponentProps<typeof Dialog.Trigger>) {
   return <Dialog.Trigger {...props} />;
 }
 
-export function SheetContent({ className, children, ...props }: ComponentProps<typeof Dialog.Content>) {
+export function SheetContent({ className, children, side = "left", closeLabel = "Close", ...props }:
+  ComponentProps<typeof Dialog.Content> & { side?: "left" | "right"; closeLabel?: string }) {
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-40 bg-background/80" />
       <Dialog.Content
-        className={cn("fixed inset-y-0 left-0 z-50 flex w-full max-w-sm flex-col gap-6 overflow-y-auto border-r border-border bg-surface p-6", className)}
+        className={cn("fixed inset-y-0 z-50 flex w-full max-w-sm flex-col gap-6 overflow-y-auto border-border bg-surface p-6", side === "left" ? "left-0 border-r" : "right-0 border-l", className)}
         {...props}
       >
         {children}
         <Dialog.Close asChild>
-          <Button variant="ghost" size="icon" className="absolute right-3 top-3" aria-label="Close navigation">
+          <Button variant="ghost" size="icon" className="absolute right-3 top-3" aria-label={closeLabel}>
             <X aria-hidden="true" />
           </Button>
         </Dialog.Close>

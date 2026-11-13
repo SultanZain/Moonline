@@ -884,6 +884,8 @@ The foundation uses this directory as the single Next.js application root. `/` r
 
 `pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog; no unused UI primitives or later-phase libraries are installed.
 
+Next.js automatic agent-file generation is disabled with `agentRules: false` so `AGENTS.md` remains source-owned. The responsive Explorer context is implemented independently of scientific data through feature components and the shared Radix Sheet; no map projection or scientific convention is assumed by this layout work.
+
 ### Phase 2 — Lunar map
 
 - Integrate OpenLayers.

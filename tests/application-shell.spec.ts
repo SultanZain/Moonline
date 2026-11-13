@@ -55,6 +55,39 @@ test("mobile sheet traps focus, restores it on Escape and closes after navigatio
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Methodology");
 });
 
+for (const width of [390, 768, 1024]) {
+  test(`site context is keyboard accessible at ${width}px and closes when desktop context appears`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/explorer");
+    const trigger = page.getByRole("button", { name: "Site context", exact: true });
+    const desktop = page.getByRole("complementary", { name: "Site and analysis context" });
+    await expect(desktop).not.toBeVisible();
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.getByRole("dialog", { name: "Site context", exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("No location selected", { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Not calculated", { exact: true })).toHaveCount(3);
+    await expect(dialog.getByText("Unavailable", { exact: true })).toBeVisible();
+    const close = dialog.getByRole("button", { name: "Close site context" });
+    await expect(close).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(close).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath("context.png"), fullPage: true });
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(dialog).not.toBeVisible();
+    await expect(desktop).toBeVisible();
+    await expect(page.getByRole("main")).toBeFocused();
+    await expect(trigger).not.toBeVisible();
+  });
+}
+
 for (const width of [390, 768, 1024, 1440]) {
   for (const route of ["/explorer", "/methodology"]) {
     test(`${route} fits ${width}px and has no browser errors`, async ({ page }, testInfo) => {
