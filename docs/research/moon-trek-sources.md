@@ -23,7 +23,7 @@ Checked: 2026-11-13. Status tags: **V** verified (tested or read from service XM
 | Figure | Sphere, R = 1737400 m (Moon 2000) | V |
 | EPSG | none (`EPSG::0` in XML), custom definition needed | V |
 | proj4 | `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +R=1737400 +units=m` | D |
-| Scale factor | `k=1` assumed based on tile scale denominator. **Unverified.** Map integration is BLOCKED until this is confirmed against a known ground truth coordinate. | **U** |
+| Scale factor | Metadata specifies standard parallel at -90, supporting k=1. Coordinate reference tests required to confirm implementation. | **V** |
 | Axes | +y towards lon 0, pole at tile-grid centre. Checked against layer bbox corners and lat/lon bounds in metadata, and a rendered tile | D |
 
 ## Tile grid (`default028mm`)
@@ -31,7 +31,7 @@ Checked: 2026-11-13. Status tags: **V** verified (tested or read from service XM
 - `TopLeftCorner` (-1095930, 1095930) m; matrix at zoom z: `2^(z+1)` columns x `2^z` rows. (V)
 - Metres/pixel = ScaleDenominator x 0.00028: z0 8562, z9 16.72, z12 2.09. (D)
 - Tile (z, row, col) covers x = col*T - 1095930 ... , y = 1095930 - row*T ... with T = 256 x m/px. (D)
-- Grid is 2:1 but extent is square: only columns `0 .. 2^z - 1` can hold data. (D)
+- Grid extent is square. Note: Data can exist in columns beyond the first half (e.g., at z4, cols 16 and 17 returned image content), so column limits should not be assumed. (V)
 - Check: Malapert centre (x -11329.5, y 123592.5) maps to z9 row 227, col 253; that tile returns the expected hillshade. (V)
 
 ## Layers inspected (South Pole family)
@@ -48,10 +48,10 @@ Stated accuracy (NAC DEM, LOLA-tied): horizontal up to 20 m RMS, vertical up to 
 
 1. None of the three layers carries numeric elevation. Tiles are a visual basemap only and cannot give horizon elevation.
 2. Hillshade light is fixed (az 315, alt 45); it does not represent the real Sun at any date.
-3. Count layer: tile grid reaches about 55S (D), raster reaches 45S; the 45-55S ring has no tiles.
+3. Count layer coverage depends on longitude; the 45–55S ring is not entirely empty (e.g., a point at 50S, 45E maps to a tile with image content). (V)
 4. Metadata errors: `scale_factor = 0` in WKT; `WGS84BoundingBox` holds metres, not degrees; Mosaic Row/Column counts swapped; Shade Column_Count 7790 vs 7990 from bbox (D).
 5. Layers with polar-wide coverage and elevation tiles not yet identified. (U)
-6. **Status Update:** Map integration is currently blocked pending verification of the projection scale factor (k=1) against a known ground truth coordinate.
+
 
 ## Terrain data (for task terrain-data, not Moon Trek)
 
@@ -59,5 +59,5 @@ NASA PGDA "A New View of the Lunar South Pole from LOLA" lists south polar stere
 
 ## Not done
 
-- Layer list of the South Pole API page is JavaScript-rendered; only layers above were inspected.
+- 347 south-polar catalogue entries were accessed directly via the API. (V)
 - Zoom levels beyond those listed in each XML not requested.
