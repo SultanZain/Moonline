@@ -23,12 +23,14 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           key={href}
           href={href}
+          title={label}
+          aria-label={label}
           onClick={onNavigate}
           aria-current={pathname === href ? "page" : undefined}
           className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 text-sm text-content-muted transition-colors hover:bg-surface motion-reduce:transition-none", pathname === href && "bg-surface font-medium text-content")}
         >
           <Icon size={18} strokeWidth={1.5} aria-hidden="true" />
-          {label}
+          <span className="navigation-label">{label}</span>
         </Link>
       ))}
     </nav>

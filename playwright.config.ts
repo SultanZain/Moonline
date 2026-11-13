@@ -7,6 +7,8 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
+  // Bound installed Edge sessions on Windows after the local parallel run exhausted memory.
+  workers: process.platform === "win32" ? 1 : undefined,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   reporter: "list",

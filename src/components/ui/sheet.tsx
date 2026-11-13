@@ -18,13 +18,16 @@ export function SheetTrigger(props: ComponentProps<typeof Dialog.Trigger>) {
   return <Dialog.Trigger {...props} />;
 }
 
-export function SheetContent({ className, children, side = "left", closeLabel = "Close", ...props }:
-  ComponentProps<typeof Dialog.Content> & { side?: "left" | "right"; closeLabel?: string }) {
+export function SheetContent({ className, children, side = "left", closeLabel = "Close", container, ...props }:
+  ComponentProps<typeof Dialog.Content> & { side?: "left" | "right" | "bottom"; closeLabel?: string; container?: HTMLElement | null }) {
   return (
-    <Dialog.Portal>
+    <Dialog.Portal container={container}>
       <Dialog.Overlay className="fixed inset-0 z-40 bg-background/80" />
       <Dialog.Content
-        className={cn("fixed inset-y-0 z-50 flex w-full max-w-sm flex-col gap-6 overflow-y-auto border-border bg-surface p-6", side === "left" ? "left-0 border-r" : "right-0 border-l", className)}
+        data-slot="sheet-content"
+        className={cn("fixed z-50 flex w-full flex-col gap-6 overflow-y-auto border-border bg-surface p-6",
+          side === "bottom" ? "inset-x-0 bottom-0 max-h-[65dvh] border-t" : "inset-y-0 max-w-sm",
+          side === "left" && "left-0 border-r", side === "right" && "right-0 border-l", className)}
         {...props}
       >
         {children}

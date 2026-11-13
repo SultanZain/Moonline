@@ -1,0 +1,68 @@
+{
+  "retrievedAt": "2026-11-13T17:36:56.591Z",
+  "spatialReference": {
+    "wkt": "PROJCS[\"Moon2000_sp\",GEOGCS[\"GCS_Moon_2000\",DATUM[\"D_Moon_2000\",SPHEROID[\"Moon_2000_IAU_IAG\",1737400.0,0.0]],PRIMEM[\"Reference_Meridian\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Stereographic_South_Pole\"],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0],PARAMETER[\"central_meridian\",0.0],PARAMETER[\"standard_parallel_1\",-90.0],UNIT[\"Meter\",1.0]]"
+  },
+  "references": [
+    {
+      "name": "Amundsen",
+      "latitude": -84.439795,
+      "longitude": 83.069149,
+      "projected": [
+        167503.44846509132,
+        20361.66377664986
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    },
+    {
+      "name": "Cabeus",
+      "latitude": -85.277073,
+      "longitude": -41.8055,
+      "projected": [
+        -95521.76993492598,
+        106814.64845540476
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    },
+    {
+      "name": "de Gerlache",
+      "latitude": -88.448714,
+      "longitude": -90.447515,
+      "projected": [
+        -47041.62785801243,
+        -367.43129029242476
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    },
+    {
+      "name": "Malapert",
+      "latitude": -84.798043,
+      "longitude": 12.305737,
+      "projected": [
+        33642.12055334018,
+        154222.5041559561
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    },
+    {
+      "name": "Shackleton",
+      "latitude": -89.625776,
+      "longitude": 132.321845,
+      "projected": [
+        8390.248047332061,
+        -7640.387885511749
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    },
+    {
+      "name": "Malapert Massif",
+      "latitude": -85.81,
+      "longitude": -3.6,
+      "projected": [
+        -7981.396593051506,
+        126860.66606493214
+      ],
+      "source": "https://trek.nasa.gov/moon/trekarcgis/rest/services/CombinedNomenclatureS/MapServer/0/query?f=json&where=UPPER%28LABEL%29+LIKE+%27MALAPERT%25%27+OR+LABEL+IN+%28%27Shackleton%27%2C%27Amundsen%27%2C%27Cabeus%27%2C%27de+Gerlache%27%29&outFields=LABEL%2Ccenter_lon%2Ccenter_lat%2Clink&returnGeometry=true"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ export function ApplicationShell({ children }: { children: ReactNode }) {
   return (
     <div className="application-shell">
       <a href="#main-content" className="skip-link">Skip to content</a>
-      <aside className="hidden min-h-screen flex-col gap-8 border-r border-border px-4 py-6 lg:flex" aria-label="Workspace sidebar">
+      <aside className="workspace-sidebar hidden min-h-screen flex-col gap-8 border-r border-border px-4 py-6 lg:flex" aria-label="Workspace sidebar">
         <div className="px-3"><Brand /><p className="mt-3 text-xs text-content-subtle">Lunar exploration workspace</p></div>
         <Navigation />
         <div className="mt-auto px-3 text-xs leading-5 text-content-subtle">
