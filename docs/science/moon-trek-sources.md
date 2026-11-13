@@ -93,13 +93,13 @@ NASA's WMTS Capabilities XML defines a 2:1 rectangular index space ($2^{z+1}$ co
 
 ## 4. Inspected South Pole Layers
 
-| Layer Identifier | Coverage | Res. | Zooms | Accuracy |
+| Layer Identifier | Coverage | Res. | Zooms | Accuracy & Attribution |
 |---|---|---|---|---|
-| `LRO_LOLA_Shade_SPolar875_10m` | 87.5°S–90°S | 10 m/px | 0–8 | Horiz: 10-50m, Vert: 1-10m |
-| `LRO_LOLA_ClrShade_SPole875_5mp_v04` | 87.5°S–90°S | 5 m/px | 0–9 | Horiz: 10-50m, Vert: 1-10m |
-| `LRO_NAC_Mosaic_86S356E_50cmp` | Malapert | 0.5 m/px | 0–12 | Horiz: 20m, Vert: 10m |
-| `LRO_NAC_Shade_86S356E_3mp` | Malapert | 3 m/px | 0–9 | Horiz: 20m, Vert: 10m |
-| `LRO_LOLA_Count_SPole45_100mp_v04` | 45°S–90°S | 100 m/px | 0–4 | Preliminary |
+| `LRO_LOLA_Shade_SPolar875_10m` | 87.5°S–90°S | 10 m/px | 0–8 | LOLA estimates: 10–50 m expected horizontal, 1–10 m absolute vertical. |
+| `LRO_LOLA_ClrShade_SPole875_5mp_v04` | 87.5°S–90°S | 5 m/px | 0–9 | LOLA estimates: 10–50 m expected horizontal, 1–10 m absolute vertical. |
+| `LRO_NAC_Mosaic_86S356E_50cmp` | Malapert | 0.5 m/px | 0–12 | Horizontal RMS of the controlling DEM may be up to 20 m. (No vertical accuracy assessed for the image mosaic). |
+| `LRO_NAC_Shade_86S356E_3mp` | Malapert | 3 m/px | 0–9 | NAC hillshade DEM estimates: up to 20 m horizontal RMS / up to 10 m vertical RMS. |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 45°S–90°S | 100 m/px | 0–4 | Preliminary product. |
 
 ---
 
