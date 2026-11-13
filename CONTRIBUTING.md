@@ -4,6 +4,15 @@ Sultan owns application engineering and merging. Rameen owns data and science. A
 
 This document owns collaboration and the task ledger. `AGENTS.md` owns operating constraints, `architecture.md` owns implementation boundaries and phase order, and `design.md` owns the visual system.
 
+## Contributor identities
+
+| Contributor | GitHub account | Responsibility |
+|---|---|---|
+| Sultan | [@SultanZain](https://github.com/SultanZain) | Application engineering, shared configuration, PR review and merging |
+| Rameen | [@Mumei-Nocturnal](https://github.com/Mumei-Nocturnal) | NASA data collection, DEM processing, Sun/Earth calculations, illumination and visibility science |
+
+Use these identities when assigning tasks and opening PRs. Rameen's agent sessions work for Rameen; Sultan's agent sessions work for Sultan. The GitHub account identifies the contributor and does not authorize work outside their assignment.
+
 ## Responsibilities
 
 | Area | Implementation owner | Boundary |
@@ -48,9 +57,9 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 
 | ID | Owner | Task | State / dependency |
 |---|---|---|---|
-| p1-foundation | Sultan | Next.js root, tokens, shell, navigation and browser verification | Verified locally; initial Git commit pending |
-| collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Prepared locally; task-branch commit pending |
-| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready after the foundation and collaboration workflow are committed |
+| p1-foundation | Sultan | Next.js root, tokens, shell, navigation and browser verification | Done; bootstrap commit `f0f1f47` on `main` |
+| collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Workflow included in bootstrap; contributor identity follow-up on `sultan/collab-workflow` awaits PR merge |
+| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready after Sultan publishes the bootstrap and merges the collaboration follow-up |
 | p2-coordinates | Rameen | Define verified lunar coordinate conventions and runtime validation used by site selection | Wait for p2-data |
 | p2-explorer | Sultan | OpenLayers map, tile/error states and manual coordinate controls using verified data/validation | Wait for p2-data and p2-coordinates |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |

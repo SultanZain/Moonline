@@ -5,7 +5,7 @@ Describe the trigger, the change, and the behavior a reviewer can verify.
 ## Assignment and scope
 
 - Task ID:
-- Contributor: Sultan / Rameen
+- Contributor: Sultan (@SultanZain) / Rameen (@Mumei-Nocturnal)
 - Assigned files/area:
 - Dependencies and shared-file handoffs:
 
