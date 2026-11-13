@@ -16,7 +16,7 @@ test("root opens Explorer and navigation reaches methodology", async ({ page }) 
   await expect(page).toHaveURL(/\/methodology$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Methodology");
   await expect(page.getByRole("link", { name: "Methodology", exact: true })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByText("There are no scientific results or synthetic datasets", { exact: false })).toBeVisible();
+  await expect(page.getByText("There are no scientific results in this workspace", { exact: false })).toBeVisible();
   await page.getByRole("link", { name: "Back to Explorer" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Mission Explorer");
 });

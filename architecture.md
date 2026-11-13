@@ -694,6 +694,8 @@ Chart requirements:
 
 Charts must use actual calculated data. Never populate them with illustrative values presented as scientific results.
 
+Sultan authorized an independent UI preview at `/comparison-preview` before Phase 5 integration. It uses source-owned, explicitly synthetic fixtures in `components/comparison/preview-data.ts`, a modular Apache ECharts SVG radar loaded only on that route, and a textual comparison without an HTML table. This preview does not define the scientific contract. All five proposed axes use a shared 0–100% display range and scheduled-sample denominator; missing axes omit the entire profile shape, while known values remain inspectable. No site coordinates, dates, ephemeris, terrain, ranking or operational recommendation are simulated. The real Phase 5 comparison still depends on Rameen's verified implementation and metadata.
+
 ---
 
 ## 12. State Management
@@ -880,7 +882,7 @@ Build the product in the following order.
 - Establish the application shell.
 - Configure basic navigation and design tokens.
 
-The foundation uses this directory as the single Next.js application root. `/` redirects to `/explorer`; `/methodology` documents the current implementation scope and planned scientific requirements. Only implemented destinations appear in navigation. The application currently contains no provider integrations, datasets, scientific calculations, or comparison routes.
+The foundation uses this directory as the single Next.js application root. `/` redirects to `/explorer`; `/methodology` documents the current implementation scope and planned scientific requirements. `/comparison-preview` is a clearly labelled synthetic UI demonstration. Only implemented destinations appear in navigation. The application currently contains no provider integrations, scientific datasets, scientific calculations, or real site comparison.
 
 `pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog; no unused UI primitives or later-phase libraries are installed.
 

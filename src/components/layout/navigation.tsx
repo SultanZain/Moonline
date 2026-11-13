@@ -6,11 +6,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Map } from "lucide-react";
+import { BookOpen, Map, Radar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const destinations = [
   { href: "/explorer", label: "Mission Explorer", icon: Map },
+  { href: "/comparison-preview", label: "Comparison preview", icon: Radar },
   { href: "/methodology", label: "Methodology", icon: BookOpen },
 ];
 
