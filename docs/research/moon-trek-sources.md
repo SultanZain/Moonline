@@ -12,6 +12,8 @@ Checked: 2026-11-13. Status tags: **V** verified (tested or read from service XM
 | Format | PNG (256x256) | V |
 | CORS | `access-control-allow-origin: *`, tile fetched from a non-NASA origin | V |
 | Rate limits, usage terms | metadata states Access/Use Constraints: None; no rate limit documented | U |
+| Metadata URL | `https://trek.nasa.gov/moon/TrekServices/ws/index/eq/searchDataset?searchText=LRO_LOLA` (replace with exact XML URL) | V |
+| CORS Check | `curl -I -H "Origin: https://example.com" <tile_url>` returned `access-control-allow-origin: *` | V |
 
 ## Projection
 
@@ -21,7 +23,7 @@ Checked: 2026-11-13. Status tags: **V** verified (tested or read from service XM
 | Figure | Sphere, R = 1737400 m (Moon 2000) | V |
 | EPSG | none (`EPSG::0` in XML), custom definition needed | V |
 | proj4 | `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +R=1737400 +units=m` | D |
-| Scale factor | WKT states `scale_factor = 0` (invalid); `k=1` assumed | U |
+| Scale factor | `k=1` assumed based on tile scale denominator. **Unverified.** Map integration is BLOCKED until this is confirmed against a known ground truth coordinate. | **U** |
 | Axes | +y towards lon 0, pole at tile-grid centre. Checked against layer bbox corners and lat/lon bounds in metadata, and a rendered tile | D |
 
 ## Tile grid (`default028mm`)
@@ -49,6 +51,7 @@ Stated accuracy (NAC DEM, LOLA-tied): horizontal up to 20 m RMS, vertical up to 
 3. Count layer: tile grid reaches about 55S (D), raster reaches 45S; the 45-55S ring has no tiles.
 4. Metadata errors: `scale_factor = 0` in WKT; `WGS84BoundingBox` holds metres, not degrees; Mosaic Row/Column counts swapped; Shade Column_Count 7790 vs 7990 from bbox (D).
 5. Layers with polar-wide coverage and elevation tiles not yet identified. (U)
+6. **Status Update:** Map integration is currently blocked pending verification of the projection scale factor (k=1) against a known ground truth coordinate.
 
 ## Terrain data (for task terrain-data, not Moon Trek)
 
