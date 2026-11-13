@@ -26,7 +26,7 @@ Use these identities when assigning tasks and opening PRs. Rameen's agent sessio
 | Future 3D visualization | Sultan | Only after the documented core 2D workflow works; render verified data without changing scientific assumptions |
 | Tooling, shared configuration, task ledger and merging | Sultan | Dependencies, CI, repository rules, shared file coordination, PR review and merge decisions |
 
-Rameen's implementation areas are `src/lib/api`, `src/lib/astronomy`, `src/lib/science`, `src/lib/dates`, `src/lib/validation`, scientific types in `src/types`, scientific tests in `tests/science`, and source/processing records in `docs/science`. These paths describe future responsibilities; create files only when a real assigned task uses them.
+Rameen's implementation areas are `src/lib/api`, `src/lib/astronomy`, `src/lib/science`, `src/lib/dates`, `src/lib/validation`, scientific types in `src/types`, scientific tests in `tests/science`, and source/processing records in `docs/science`. UI-only types stay with their Sultan-owned feature. These paths describe future responsibilities; create files only when a real assigned task uses them.
 
 Sultan's implementation areas are `src/app`, `src/components`, `src/hooks`, application configuration in `src/config`, `src/lib/utils.ts`, application/browser tests, and repository tooling. Scientific calculations and provider-specific request parameters stay in Rameen's modules even when a Sultan-owned API route calls them.
 
@@ -58,8 +58,9 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | ID | Owner | Task | State / dependency |
 |---|---|---|---|
 | p1-foundation | Sultan | Next.js root, tokens, shell, navigation and browser verification | Done; bootstrap commit `f0f1f47` on `main` |
-| collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Workflow included in bootstrap; contributor identity follow-up on `sultan/collab-workflow` awaits PR merge |
-| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready after Sultan publishes the bootstrap and merges the collaboration follow-up |
+| collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Done; contributor follow-up `ed8997f` is published on `main` |
+| pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Active on `sultan/pr-workflow` |
+| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready; branch from latest `main` |
 | p2-coordinates | Rameen | Define verified lunar coordinate conventions and runtime validation used by site selection | Wait for p2-data |
 | p2-explorer | Sultan | OpenLayers map, tile/error states and manual coordinate controls using verified data/validation | Wait for p2-data and p2-coordinates |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |
@@ -77,18 +78,18 @@ Before Sultan integrates scientific work, Rameen's PR must provide the actual ex
 
 Prefer a small contract PR before dependent implementation when both contributors need the same types. Merge it before consuming those types. Scientific examples must be either verified references with provenance or visibly identified test fixtures. UI work can address layout/accessibility independently; it must not add fake charts, numbers, or successful integrations.
 
-If a task needs another owner's file, request an explicit handoff in the PR or ask Sultan to assign it. The file owner handles the change, or Sultan records a limited transfer. Do not implement the same responsibility twice to avoid a handoff.
+If a task needs another owner's file, request an explicit handoff in the PR or ask Sultan to assign it. The file owner handles the change on a separate owner branch by default. A limited ownership transfer must update the coordinated path policy before dependent work; do not bypass the ownership check. Do not implement the same responsibility twice to avoid a handoff.
 
 ## Commits and PRs
 
 - Use terse Conventional Commits, preferably generated with the `caveman-commit` skill: `feat(science): verify lunar observer geometry` or `fix(explorer): preserve selection on tile failure`.
 - Inspect `git status`, the diff, and staged files before committing. Stage only the task's files. Keep `.env` files, credentials, generated output and local skill bundles out of commits.
-- Push the task branch when its owner is ready to publish it and open a PR targeting `main`. For the current bootstrap, the user will push; the agent must not push.
+- Push the task branch when its owner is ready to publish it and open a PR targeting `main`. Sultan's agents have standing authorization for assigned branch pushes, PR creation, review and merging. Rameen's agents push her task branches and open PRs for Sultan's review.
 - Use the PR template. Include task ownership, scope, sources/conventions for scientific changes, actual check results, and remaining limitations.
 - Run `pnpm verify` for substantial application changes. Scientific changes also need their domain/reference tests. Documentation-only changes need diff/link/workflow checks rather than an unnecessary application rebuild.
 - Rameen's PR requires Sultan's explicit review and approval before Sultan merges it. New commits after review require another look.
 - Sultan's own implementation also uses a PR and passing checks. An author cannot approve their own GitHub PR; do not claim self-approval or configure an approval rule that makes the sole maintainer unable to merge.
-- Only Sultan decides and performs merges. Agents may prepare a PR but must not merge it without Sultan's explicit instruction for that PR.
+- Only Sultan or an agent working for Sultan performs merges. Before merging, review the final diff, confirm task ownership, check CI against the current PR commit, and resolve conflicts/review requests. Do not merge drafts or PRs with failed/pending required checks, unresolved requested changes, or unclear scientific provenance.
 
 To incorporate new main-branch work, fetch `origin` and merge `origin/main` into the task branch. Resolve only conflicts in the assigned scope. Coordinate conflicts involving another contributor's work; do not discard their changes. Avoid rewriting a published branch and never force-push `main`.
 
@@ -98,12 +99,14 @@ Repository: https://github.com/SultanZain/Moonline
 
 The committed workflow runs `pnpm verify` for PRs and for pushes to `main`. `CODEOWNERS` requests Sultan's review; it does not prevent direct pushes or merges on its own.
 
+The separate `ownership` check validates the PR author's `sultan/` or `rameen/` branch and every changed path, including deletions and both sides of renames. It runs trusted base-branch code with read-only repository permission, fetches PR objects only, and never checks out or executes the contributor's code. This automates file boundaries; Sultan still reviews scientific accuracy and task scope.
+
 In GitHub Settings, configure rules for `main` before Rameen starts:
 
-1. Require a pull request and the `verify` status check. Require branches to be up to date before merging.
+1. Require a pull request and the `verify` and `ownership` status checks once the ownership workflow is published on `main`. Require branches to be up to date before merging.
 2. Block force pushes and branch deletion. Keep merge/update permission with Sultan; give Rameen contributor access, not repository administration.
 3. Request Sultan's code-owner review on contributor PRs. Dismiss stale approvals after new commits and require conversation resolution.
 4. Account for the sole-maintainer case: a blanket required code-owner approval also blocks Sultan-authored PRs. Use a narrowly scoped PR-only maintainer bypass for approval/update restrictions if supported, while keeping the PR and CI requirements in a separate rule without that bypass. Otherwise keep Sultan review as an explicit contributor policy until a second eligible reviewer is configured.
 5. Confirm the rules in the repository UI; local documents and `CODEOWNERS` are not proof that server-side protections are enabled.
 
-The current agent will not push, invite collaborators, or modify remote repository settings. The initial repository and collaboration commits must be made locally first. No workflow can guarantee zero merge conflicts; task ownership, small PRs, early interface handoffs and isolated branches reduce them.
+The bootstrap and contributor follow-up are published, and the initial GitHub verification runs passed. Sultan's agents now handle assigned branch pushes and PR review/merging under the checks above. No workflow guarantees zero merge conflicts; task ownership, small PRs, early interface handoffs and isolated branches reduce them.
