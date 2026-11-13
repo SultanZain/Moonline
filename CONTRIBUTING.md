@@ -59,7 +59,7 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 |---|---|---|---|
 | p1-foundation | Sultan | Next.js root, tokens, shell, navigation and browser verification | Done; bootstrap commit `f0f1f47` on `main` |
 | collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Done; contributor follow-up `ed8997f` is published on `main` |
-| pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Active on `sultan/pr-workflow` |
+| pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Done; implementation merged in [PR #1](https://github.com/SultanZain/Moonline/pull/1) |
 | p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready; branch from latest `main` |
 | p2-coordinates | Rameen | Define verified lunar coordinate conventions and runtime validation used by site selection | Wait for p2-data |
 | p2-explorer | Sultan | OpenLayers map, tile/error states and manual coordinate controls using verified data/validation | Wait for p2-data and p2-coordinates |
