@@ -1,62 +1,154 @@
-# Moon Trek sources (task p2-data)
+# NASA Moon Trek Data Sources (Task p2-data)
 
-Checked: 2026-11-13. Status tags: **V** verified (tested or read from service XML/metadata), **D** derived (calculated here), **U** unverified.
+Documentation and verification record for NASA Moon Trek WMTS tile services, polar projections, and South Pole layers. Focused on verified data for the Lunar Landing Site Navigator.
 
-## Service
+Checked: 2026-11-13.
+Status tags:
+- **V**: Verified (tested live against NASA Trek HTTP APIs or tile content)
+- **D**: Derived (mathematically calculated from projection parameters)
+- **U**: Unverified (provisional finding or behavior not independently validated)
 
-| Item | Value | Status |
+---
+
+## 1. WMTS Service Architecture
+
+| Parameter | Verified Specification | Status |
 |---|---|---|
-| Protocol | OGC WMTS, RESTful | V |
-| Tile URL | `https://trek.nasa.gov/tiles/Moon/SP/<LAYER_ID>/1.0.0/default/default028mm/{z}/{row}/{col}.png` | V |
-| Style / TileMatrixSet | `default` / `default028mm` | V |
-| Format | PNG (256x256) | V |
-| CORS | `access-control-allow-origin: *`, tile fetched from a non-NASA origin | V |
-| Rate limits, usage terms | metadata states Access/Use Constraints: None; no rate limit documented | U |
-| Metadata URL | `https://trek.nasa.gov/moon/TrekServices/ws/index/eq/searchDataset?searchText=LRO_LOLA` (replace with exact XML URL) | V |
-| CORS Check | `curl -I -H "Origin: https://example.com" <tile_url>` returned `access-control-allow-origin: *` | V |
+| Protocol | OGC WMTS 1.0.0 (RESTful) | V |
+| Tile URL Template | `https://trek.nasa.gov/tiles/Moon/SP/<LAYER_ID>/1.0.0/default/default028mm/{z}/{row}/{col}.png` | V |
+| Tile Matrix Set | `default028mm` | V |
+| Style Identifier | `default` | V |
+| Tile Dimensions | 256 x 256 pixels | V |
+| Image Encoding | PNG (8-bit for the inspected layers) | V |
+| Access Constraints | Metadata states None | U |
+| CORS Header | `access-control-allow-origin: *` (tested via browser console `fetch`) | V |
+| Service Catalog API | `https://trek.nasa.gov/moon/TrekServices/ws/index/polar/listVisibleLayers?proj=urn:ogc:def:crs:IAU2000::30120&start=0&rows=500` | V |
+| Metadata/Abstract URLs | `https://trek.nasa.gov/moon/TrekWS/rest/cat/...` | U |
+| WMTS Capabilities XML | `https://trek.nasa.gov/tiles/Moon/SP/<LAYER_ID>/1.0.0/WMTSCapabilities.xml` | V |
 
-## Projection
+---
 
-| Item | Value | Status |
+## 2. Polar Stereographic Projection
+
+Moon Trek South Pole datasets use a Moon-centered Polar Stereographic projection (IAU/IAG Moon 2000 sphere).
+
+| Parameter | Specification | Status |
 |---|---|---|
-| Projection | Polar stereographic, lat_0 -90, lon_0 0, x/y in metres from the pole | V |
-| Figure | Sphere, R = 1737400 m (Moon 2000) | V |
-| EPSG | none (`EPSG::0` in XML), custom definition needed | V |
-| proj4 | `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +R=1737400 +units=m` | D |
-| Scale factor | Metadata specifies standard parallel at -90, supporting k=1. Coordinate reference tests required to confirm implementation. | **V** |
-| Axes | +y towards lon 0, pole at tile-grid centre. Checked against layer bbox corners and lat/lon bounds in metadata, and a rendered tile | D |
+| Projection Name | Polar Stereographic | V |
+| Official CRS URN | `urn:ogc:def:crs:IAU2000::30120` | V |
+| Reference Body | Moon (IAU 2000) | V |
+| Ellipsoid / Figure | Sphere, radius $R = 1,737,400\text{ m}$ | V |
+| Flattening | 0.0 (strictly spherical reference) | V |
+| Latitude of Origin ($\phi_0$) | $-90.0^\circ$ (South Pole) | V |
+| Central Meridian ($\lambda_0$) | $0.0^\circ$ (Lunar Prime Meridian) | V |
+| Scale Factor ($k$) | $1.0$ | D |
+| False Easting / Northing | $0.0\text{ m}$ | V |
+| Proj4 Definition | `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +R=1737400 +units=m +no_defs` | D |
 
-## Tile grid (`default028mm`)
+### Planar Coordinate Axes Orientation (Derived from bbox and lat/lon)
+- **Origin $(0, 0)$**: South Pole (latitude $-90^\circ$).
+- **$+Y$ Axis**: Points along the lunar Prime Meridian ($0^\circ$ longitude).
+- **$+X$ Axis**: Points towards $+90^\circ\text{E}$ longitude (lunar east).
+*(Status: D)*
 
-- `TopLeftCorner` (-1095930, 1095930) m; matrix at zoom z: `2^(z+1)` columns x `2^z` rows. (V)
-- Metres/pixel = ScaleDenominator x 0.00028: z0 8562, z9 16.72, z12 2.09. (D)
-- Tile (z, row, col) covers x = col*T - 1095930 ... , y = 1095930 - row*T ... with T = 256 x m/px. (D)
-- Grid extent is square. Note: Data can exist in columns beyond the first half (e.g., at z4, cols 16 and 17 returned image content), so column limits should not be assumed. (V)
-- Check: Malapert centre (x -11329.5, y 123592.5) maps to z9 row 227, col 253; that tile returns the expected hillshade. (V)
+---
 
-## Layers inspected (South Pole family)
+## 3. Tile Matrix Set Geometry (`default028mm`)
 
-| Layer ID | Content | Coverage | Source res. | Zoom listed | Elevation values |
+NASA's WMTS Capabilities XML defines a 2:1 rectangular index space ($2^{z+1}$ columns $\times$ $2^z$ rows). Each tile is square ($256 \times 256$ px).
+
+- **Top-Left Corner**: $(-1095930\text{ m}, 1095930\text{ m})$ (V)
+- **Resolution Formula**: $8561.953125 / 2^z \text{ m/px}$ (D)
+- **Tile Span ($T_z$)**: $2,191,860 / 2^z \text{ meters}$ (D)
+- **Matrix Dimensions**: Width $= 2^{z+1}$, Height $= 2^z$ (V)
+
+### Matrix Extent & Footprint
+- **Full Extent**: Width $= 4,383,720\text{ m}$ ($x \in [-1095930, +3287790]$), Height $= 2,191,860\text{ m}$. (D)
+- **Active Data**: Each layer has its own footprint. Polar caps (e.g., LOLA 87.5°S) are confined to the left square half $[-1095930, -1095930, 1095930, 1095930]$. Wider layers (Count 45°S) extend beyond the left half.
+
+### Scale Hierarchy (z0 to z12)
+*Note: This is a generic template. Each layer's max zoom must be set per its own published limits.*
+
+| $z$ | Cols x Rows | Tile Span (m) | Resolution (m/px) | Scale Denominator |
+|---|---|---|---|---|
+| 0 | $2 \times 1$ | 2,191,860 | 8561.9531 | 30,578,404 |
+| 1 | $4 \times 2$ | 1,095,930 | 4280.9766 | 15,289,202 |
+| 2 | $8 \times 4$ | 547,965 | 2140.4883 | 7,644,601 |
+| 3 | $16 \times 8$ | 273,983 | 1070.2441 | 3,822,301 |
+| 4 | $32 \times 16$ | 136,991 | 535.1221 | 1,911,150 |
+| 5 | $64 \times 32$ | 68,496 | 267.5610 | 955,575 |
+| 6 | $128 \times 64$ | 34,248 | 133.7805 | 477,788 |
+| 7 | $256 \times 128$ | 17,124 | 66.8903 | 238,894 |
+| 8 | $512 \times 256$ | 8,562 | 33.4451 | 119,447 |
+| 9 | $1024 \times 512$ | 4,281 | 16.7226 | **59,723** |
+| 10 | $2048 \times 1024$ | 2,140 | 8.3613 | 29,862 |
+| 11 | $4096 \times 2048$ | 1,070 | 4.1806 | 14,931 |
+| 12 | $8192 \times 4096$ | 535 | 2.0903 | 7,465 |
+
+### Pole Position
+- **$z=0$**: Pole is inside Tile (0,0,0).
+- **$z \ge 1$**: Pole is at the boundary between col/row $2^{z-1}-1$ and $2^{z-1}$.
+
+---
+
+## 4. Inspected South Pole Layers
+
+| Layer Identifier | Coverage | Res. | Zooms | Accuracy & Attribution |
+|---|---|---|---|---|
+| `LRO_LOLA_Shade_SPolar875_10m` | 87.5°S–90°S | 10 m/px | 0–8 | LOLA estimates: 10–50 m expected horizontal, 1–10 m absolute vertical. |
+| `LRO_LOLA_ClrShade_SPole875_5mp_v04` | 87.5°S–90°S | 5 m/px | 0–9 | LOLA estimates: 10–50 m expected horizontal, 1–10 m absolute vertical. |
+| `LRO_NAC_Mosaic_86S356E_50cmp` | Malapert | 0.5 m/px | 0–12 | Horizontal RMS of the controlling DEM may be up to 20 m. (No vertical accuracy assessed for the image mosaic). |
+| `LRO_NAC_Shade_86S356E_3mp` | Malapert | 3 m/px | 0–9 | NAC hillshade DEM estimates: up to 20 m horizontal RMS / up to 10 m vertical RMS. |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 45°S–90°S | 100 m/px | 0–4 | Preliminary product. |
+
+---
+
+## 5. Findings & Evidence
+
+### 5.1 Limitations
+- Visual tiles do not deliver numeric elevation values (no horizon calculations possible from PNGs).
+- Hillshade uses a fixed light source (az 315°, alt 45°); not real solar positions.
+- Future terrain analysis requires verified numeric elevation datasets (units, nodata, datum, etc.).
+
+### 5.2 Metadata Errors
+1. `scale_factor = 0` in WKT. (V)
+2. `WGS84BoundingBox` holds metres, not degrees. (V)
+3. Swapped Row/Column Counts in LROC NAC Mosaic. (D)
+4. `Column_Count` 7790 vs bbox extent 7990. (D)
+
+### 5.3 Reproducible Probe Table
+| Layer ID | z | row | col | HTTP | Content Check |
 |---|---|---|---|---|---|
-| `LRO_LOLA_Count_SPole45_100mp_v04` | LOLA shot count per pixel | 45S-90S, 28800 px square | 100 m | 0-4 | No |
-| `LRO_NAC_Mosaic_86S356E_50cmp` | LROC NAC image mosaic | Malapert, lat -85.15 to -86.47, lon -13.1 to 5.8 | 0.5 m | 0-12 | No |
-| `LRO_NAC_Shade_86S356E_3mp` | Hillshade of LROC NAC DEM (`gdaldem hillshade -z 2 -az 315 -alt 45`) | Malapert, lat -84.59 to -87.2, lon -15.37 to 0.25 | 3 m | 0-9 | No (8-bit image, nodata 0) |
+| `LRO_NAC_Shade_86S356E_3mp` | 9 | 227 | 253 | 200 OK | `image/png`, 60,718 bytes, non-blank |
+| `LRO_NAC_Shade_86S356E_3mp` | 10 | 454 | 506 | 404 | Beyond max z9 |
+| `LRO_LOLA_ClrShade_SPole875_5mp_v04` | 9 | 255 | 255 | 200 OK | `image/png`, 196,999 bytes, non-blank |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 4 | 7 | 16 | 200 OK | `image/png`, non-blank |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 5 | 0 | 0 | 404 | Beyond max z4 |
+| `LRO_LOLA_Shade_SPolar875_10m` | 2 | 1 | 0 | 404 | Outside 75.8km radius |
 
-Stated accuracy (NAC DEM, LOLA-tied): horizontal up to 20 m RMS, vertical up to 10 m RMS. Count layer: preliminary product (V, metadata).
+---
 
-## Findings
+## 6. OpenLayers Map Integration (Proposal for Sultan, Untested)
 
-1. None of the three layers carries numeric elevation. Tiles are a visual basemap only and cannot give horizon elevation.
-2. Hillshade light is fixed (az 315, alt 45); it does not represent the real Sun at any date.
-3. Count layer coverage depends on longitude; the 45–55S ring is not entirely empty (e.g., a point at 50S, 45E maps to a tile with image content). (V)
-4. Metadata errors: `scale_factor = 0` in WKT; `WGS84BoundingBox` holds metres, not degrees; Mosaic Row/Column counts swapped; Shade Column_Count 7790 vs 7990 from bbox (D).
-5. Layers with polar-wide coverage and elevation tiles not yet identified. (U)
+*Note: The source-specific `extent` must be applied at the layer level.*
 
-## Terrain data (for task terrain-data, not Moon Trek)
+```typescript
+import Projection from 'ol/proj/Projection';
+import WMTSTileGrid from 'ol/tilegrid/WMTS';
 
-NASA PGDA "A New View of the Lunar South Pole from LOLA" lists south polar stereographic GeoTIFFs in the MOON_ME frame (DE421), e.g. `LDEM_80S_20MPP_ADJ.TIF` (20 m). Source: https://pgda.gsfc.nasa.gov/products/90. Download size, vertical datum and licence not checked here. (U)
+export const MOON_SOUTH_POLE_PROJ = new Projection({
+  code: 'urn:ogc:def:crs:IAU2000::30120',
+  units: 'm',
+});
 
-## Not done
+const RESOLUTIONS = Array.from({ length: 13 }, (_, z) => 8561.953125 / Math.pow(2, z));
+const MATRIX_SIZES = RESOLUTIONS.map((_, z) => [Math.pow(2, z + 1), Math.pow(2, z)]);
 
-- 347 south-polar catalogue entries were accessed directly via the API. (V)
-- Zoom levels beyond those listed in each XML not requested.
+export const MOON_SOUTH_POLE_TILE_GRID = new WMTSTileGrid({
+  origin: [-1095930, 1095930],
+  extent: [-1095930, -1095930, 3287790, 1095930],
+  resolutions: RESOLUTIONS,
+  matrixIds: RESOLUTIONS.map((_, z) => String(z)),
+  sizes: MATRIX_SIZES,
+  tileSize: [256, 256],
+});
