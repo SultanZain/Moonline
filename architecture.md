@@ -667,6 +667,14 @@ The exact projection and tile configuration must be based on the Moon Trek servi
 
 Keep map interaction state separate from scientific analysis logic.
 
+The Phase 2 Explorer consumes nine NASA WMTS sources through `src/config/moon-trek.ts` and a browser-only OpenLayers engine: global and polar WAC imagery and LOLA relief, plus five polar overlays. Each source has its own format and maximum zoom. Global tiles use an equirectangular Moon 2000 map; polar tiles use spherical south-polar stereographic coordinates with a radius of 1,737,400 metres. The published `default028mm` matrix sizes are `2^(z+1)` columns by `2^z` rows. No square extent, half-column cut-off, latitude-band mask or inferred layer-footprint clipping is applied. Polar source resolutions come from the published scale denominator, and global resolutions from the published angular tile span.
+
+Tiles are fetched directly with verified CORS, a 15-second per-request deadline, six concurrent loads, image/HTTP failure handling, and cancellation on source replacement or unmount. Error status follows failures in the current viewport; retry retains selection and the view. An enabled higher-resolution overlay can raise the view's zoom limit without issuing requests beyond another source's published maximum. Only the NAC layers with a documented zero nodata value receive the black-pixel transparency mask; zero shot counts are not treated as missing elevations. Blank imagery is distinguished from a request failure and does not establish absence of coverage at every longitude.
+
+Map-coordinate conversions and validation live in the Explorer feature. Native projected nomenclature coordinates from NASA supply independent forward/inverse reference cases in `tests/fixtures/nasa-map-coordinate-references.json`. The map scale corrects for the projection and reports horizontal reference-sphere distance at the view center, rather than terrain-following distance. These map helpers do not define observer height, altitude datum, ephemeris frame or local astronomical axes; those remain in Rameen's scientific contract.
+
+`/api/lunar-locations` queries a fixed NASA nomenclature service, validates its coordinate system and payload, and returns at most eight map locations. The client debounces name searches and cancels stale responses; manually entered coordinates work independently of search availability. Selection opens a contextual inspector with an explicit UTC mission-time input and up to three candidate sites. The JSON export identifies coordinates and uncalculated analysis; it is not a mission report.
+
 ---
 
 ## 11. Chart Architecture
@@ -882,9 +890,9 @@ Build the product in the following order.
 - Establish the application shell.
 - Configure basic navigation and design tokens.
 
-The foundation uses this directory as the single Next.js application root. `/` redirects to `/explorer`; `/methodology` documents the current implementation scope and planned scientific requirements. `/comparison-preview` is a clearly labelled synthetic UI demonstration. Only implemented destinations appear in navigation. The application currently contains no provider integrations, scientific datasets, scientific calculations, or real site comparison.
+The foundation uses this directory as the single Next.js application root. `/` redirects to `/explorer`; `/methodology` documents the current implementation scope and planned scientific requirements. `/comparison-preview` is a clearly labelled synthetic UI demonstration. Only implemented destinations appear in navigation. Explorer supports NASA imagery and map-location selection; scientific observer validation, ephemeris integration, visibility calculations and scientific site comparison remain unimplemented.
 
-`pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog; no unused UI primitives or later-phase libraries are installed.
+`pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog. OpenLayers is loaded only by Explorer; no unused UI primitives or later-phase libraries are installed.
 
 Next.js automatic agent-file generation is disabled with `agentRules: false` so `AGENTS.md` remains source-owned. The responsive Explorer context is implemented independently of scientific data through feature components and the shared Radix Sheet; no map projection or scientific convention is assumed by this layout work.
 

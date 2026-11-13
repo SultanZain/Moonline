@@ -80,7 +80,7 @@ Sun and Earth colors must remain consistent across cards, map markers, legends, 
 
 The central tokens are implemented in `src/app/globals.css`. The initial canvas is `#0b0b0b`, panels are `#151515`, and raised surfaces are `#242424`. Text uses `#f5f5f3`, `#b4b4b4`, and `#949494`. Selected-site/focus emphasis is `#d4e56a`; Sun is `#f2b544`; Earth is `#68cadd`. Primary buttons use inverted neutral text/surface colors. Control borders use `#737373` to distinguish interactive edges from structural borders.
 
-DM Sans weights 400, 500, and 600 are served locally. Controls have a 6px radius and a minimum 44px target. The labelled 224px desktop sidebar folds into a Radix navigation sheet below 1024px. Explorer context appears in a right-side Radix sheet below 1280px and beside the workspace at wider widths; panels use 24px spacing on desktop and 16px on mobile. The context sheet closes when the permanent desktop panel becomes visible and moves focus to the workspace; normal dismissal restores focus to its trigger.
+DM Sans weights 400, 500, and 600 are served locally. Controls have a 6px radius and a minimum 44px target. The labelled 224px desktop sidebar folds into a Radix navigation sheet below 1024px; Explorer uses a 64px desktop rail. Explorer context opens in a nonmodal map inspector at 768px and wider, and in a Radix bottom sheet below 768px. Selection and mission-time inputs survive this transition; dismissing the inspector restores focus to its map trigger.
 
 ## 4. Typography
 
@@ -162,6 +162,10 @@ Interaction:
 - Map movement must not accidentally activate unrelated controls.
 - Selected, hovered, focused, and disabled states must be visually distinct.
 - If imagery fails, preserve the rest of the application and show a useful map error state.
+
+The Phase 2 Explorer map fills the available viewport. Desktop navigation becomes a compact rail; smaller screens retain the application menu. Search and coordinate entry sit at the top left, and projection, basemap and overlay controls at the top right. Zoom, reset and fullscreen sit at the lower right; cursor coordinates, lunar scale and projection information sit at the lower left. Controls use opaque neutral surfaces, accessible names, tooltips and touch targets of at least 44px. Keyboard arrows and +/− operate the focused map; Enter selects its center.
+
+Selecting a map location or search result opens a dismissible, nonmodal desktop inspector; mobile uses the existing Radix bottom sheet. The inspector contains coordinates, available nomenclature, an explicit UTC mission-time input and candidate actions. Up to three numbered candidate markers remain on the map. Fullscreen preserves the same map instance, controls and inspector; an expanded view provides a keyboard-accessible fallback when the native Fullscreen API is unavailable. Detailed source limitations, metadata and the published slope legend are disclosed in the layer panel. Tile loading, missing coverage and failures remain distinct, and retries preserve the view. Analysis, timelines and scientific comparison appear only after their calculations are implemented.
 
 ### 7.2 Site Analysis
 

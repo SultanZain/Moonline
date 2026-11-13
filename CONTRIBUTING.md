@@ -60,11 +60,12 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | p1-foundation | Sultan | Next.js root, tokens, shell, navigation and browser verification | Done; bootstrap commit `f0f1f47` on `main` |
 | collab-workflow | Sultan | Ownership rules, PR template, CI and review setup | Done; contributor follow-up `ed8997f` is published on `main` |
 | pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Done; implementation merged in [PR #1](https://github.com/SultanZain/Moonline/pull/1) |
-| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready; branch from latest `main` |
-| p2-workspace-layout | Sultan | Responsive Explorer workspace and accessible context sheet | No source-data dependency; delivery status is tracked in the task PR |
-| comparison-preview | Sultan | Explicitly illustrative radar comparison, keyboard controls and textual values | Assigned directly by Sultan; independent UI preview only, no scientific integration; delivery tracked in its PR |
-| p2-coordinates | Rameen | Define verified lunar coordinate conventions and runtime validation used by site selection | Wait for p2-data |
-| p2-explorer | Sultan | OpenLayers map, tile/error states and manual coordinate controls using verified data/validation | Wait for p2-data and p2-coordinates |
+| p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Done; initial research merged in [PR #6](https://github.com/SultanZain/Moonline/pull/6), expanded source record and corrected accuracy attribution in [PR #8](https://github.com/SultanZain/Moonline/pull/8) |
+| p2-workspace-layout | Sultan | Responsive Explorer workspace and accessible context sheet | Done; merged in [PR #3](https://github.com/SultanZain/Moonline/pull/3) |
+| comparison-preview | Sultan | Explicitly illustrative radar comparison, keyboard controls and textual values | Done; synthetic UI preview merged in [PR #4](https://github.com/SultanZain/Moonline/pull/4); scientific integration remains separate |
+| p2-map-imagery | Sultan | Map-first Explorer, NASA basemaps/overlays, search, map-coordinate selection, fullscreen and candidate export | Verified locally on `sultan/p2-map-imagery`; map conversions checked against NASA native coordinates; scientific observer inputs are not implemented |
+| p2-coordinates | Rameen | Define verified scientific observer-coordinate conventions and exported runtime validation | Ready after PR #6; establish reference frame, height/datum, units and reference/boundary tests before ephemeris integration |
+| p2-explorer | Sultan | Connect selected map locations and candidate sites to the verified scientific observer contract | Wait for p2-coordinates; map navigation and candidate collection are delivered by p2-map-imagery |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |
 | p3-api | Sultan | Bounded Next.js ephemeris/API orchestration and accessible loading/error behavior | Wait for the p3-positions contract and implementation |
 | p4-visibility | Rameen | Scientific time-series generation and ideal geometric visibility, including missing samples and horizon boundaries | Wait for verified positions |
