@@ -86,11 +86,11 @@ export function isLunarCoordinate(
 export function isLunarObserver(
   value: unknown,
 ): value is LunarObserver {
-  if (!isRecord(value)) return false;
-
-  if (!isLunarCoordinate(value)) return false;
+   if (!isRecord(value)) return false;
 
   const elevation = value.elevationMeters;
+
+  if (!isLunarCoordinate(value)) return false;
 
   return (
     elevation === null ||
