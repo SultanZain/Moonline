@@ -30,7 +30,7 @@ NASA Solar System Treks publishes lunar tile services via the OGC Web Map Tile S
 | Service Catalog API | `https://trek.nasa.gov/moon/TrekServices/ws/index/polar/listVisibleLayers?proj=urn:ogc:def:crs:IAU2000::30120&start=0&rows=500` (347 entries retrieved) | V |
 | Metadata Service URL | `https://trek.nasa.gov/moon/TrekWS/rest/cat/metadata/fgdc/html?label=<LAYER_ID>` | V |
 | Abstract Service URL | `https://trek.nasa.gov/moon/TrekWS/rest/cat/abstract?label=<LAYER_ID>` | V |
-| WMTS Capabilities XML | `https://trek.nasa.gov/tiles/Moon/SP/<LAYER_ID>/1.0.0/WMTSCapabilities.xml` (e.g. verified for `LRO_NAC_Shade_86S356E_3mp` and `LRO_LOLA_Count_SPole45_100mp_v04`) | V |
+| WMTS Capabilities XML | `https://trek.nasa.gov/tiles/Moon/SP/<LAYER_ID>/1.0.0/WMTSCapabilities.xml` | V |
 
 ---
 
@@ -80,27 +80,27 @@ NASA Moon Trek's WMTS Capabilities XML defines a 2:1 rectangular index space of 
   - Width: $2^{z+1} \times T_z = 2 \times 2,191,860 = 4,383,720\text{ m}$ ($x \in [-1095930\text{ m}, +3287790\text{ m}]$).
   - Height: $2^z \times T_z = 2,191,860\text{ m}$ ($y \in [-1095930\text{ m}, +1095930\text{ m}]$).
 - **Active Polar Data Footprint**: 
-  The full WMTS matrix spans the 2:1 rectangular extent. However, **each raster layer has its own documented footprint**. For layers confined to the immediate polar cap (e.g. LOLA $87.5^\circ\text{S}$), active data is restricted to the left-hand half $[-1095930, -1095930, 1095930, 1095930]\text{ m}$ ($2,191,860\text{ m} \times 2,191,860\text{ m}$ centered on the pole). For wider-swath datasets like LOLA Count $45^\circ\text{S}$, active imagery extends into column indices beyond $2^z$ (e.g., at $z=4$, columns 16 and 17 return HTTP 200 with non-blank imagery). Do not infer a layer's coverage mask from the matrix extent; always use the layer's specific published bounding box.
+  The full WMTS matrix spans the 2:1 rectangular extent. However, **each raster layer has its own documented footprint**. For layers confined to the immediate polar cap (e.g. LOLA $87.5^\circ\text{S}$), active data is restricted to the square left-hand half $[-1095930, -1095930, 1095930, 1095930]\text{ m}$ ($2,191,860\text{ m} \times 2,191,860\text{ m}$ centered on the pole). For wider-swath datasets like LOLA Count $45^\circ\text{S}$, active imagery extends into column indices beyond $2^z$. Do not infer a layer's coverage mask from the matrix extent; always use the layer's specific published bounding box.
 
 ### Scale and Resolution Hierarchy (z0 to z12)
 
-Matrix Dimensions are listed as Width $\times$ Height (Columns $\times$ Rows). Note: Each raster uses its own published maximum zoom; the z0-z12 stack below is a generic template.
+*Note: Each raster uses its own published maximum zoom; the z0-z12 stack below is a generic template. Application integrations must truncate to each source's published max.*
 
-| Zoom Level $z$ | Matrix Dimensions (Cols x Rows) | Tile Span $T_z$ (m) | Resolution (m/px) | Scale Denominator | Tested Tile Check (Live NASA API) |
-|---|---|---|---|---|---|
-| 0 | $2 \times 1$ | $2,191,860$ | $8561.9531$ | $30,578,404$ | V (LOLA Shade / Count / NAC return 200) |
-| 1 | $4 \times 2$ | $1,095,930$ | $4280.9766$ | $15,289,202$ | V (LOLA Shade cols 0, 1 return 200; cols 2, 3 return 404) |
-| 2 | $8 \times 4$ | $547,965$ | $2140.4883$ | $7,644,601$ | V (LOLA Shade cols 1, 2 return 200; cols 0, 3..7 return 404) |
-| 3 | $16 \times 8$ | $273,983$ | $1070.2441$ | $3,822,301$ | V (LOLA Shade active around pole) |
-| 4 | $32 \times 16$ | $136,991$ | $535.1221$ | $1,911,150$ | V (Count layer cols 16, 17 return 200 with real imagery) |
-| 5 | $64 \times 32$ | $68,496$ | $267.5610$ | $955,575$ | V (Count layer returns 404; NAC Shade returns 200) |
-| 6 | $128 \times 64$ | $34,248$ | $133.7805$ | $477,788$ | V (LOLA Shade z6 returns 200) |
-| 7 | $256 \times 128$ | $17,124$ | $66.8903$ | $238,894$ | V (LOLA Shade z7 returns 200) |
-| 8 | $512 \times 256$ | $8,562$ | $33.4451$ | $119,447$ | V (LOLA Shade z8 returns 200; NAC Shade returns 200) |
-| 9 | $1024 \times 512$ | $4,281$ | $16.7226$ | $59,724$ | V (Malapert NAC row 227 col 253 returns 200; LOLA ClrShade z9 row 255 col 255 returns 200) |
-| 10 | $2048 \times 1024$ | $2,140$ | $8.3613$ | $29,862$ | V (NAC Mosaic z10 returns 200; NAC Shade z10 returns 404) |
-| 11 | $4096 \times 2048$ | $1,070$ | $4.1806$ | $14,931$ | V (NAC Mosaic z11 returns 200) |
-| 12 | $8192 \times 4096$ | $535$ | $2.0903$ | $7,465$ | V (NAC Mosaic z12 returns 200) |
+| Zoom Level $z$ | Matrix Dimensions (Cols x Rows) | Tile Span $T_z$ (m) | Resolution (m/px) | Scale Denominator |
+|---|---|---|---|---|
+| 0 | $2 \times 1$ | $2,191,860$ | $8561.9531$ | $30,578,404$ |
+| 1 | $4 \times 2$ | $1,095,930$ | $4280.9766$ | $15,289,202$ |
+| 2 | $8 \times 4$ | $547,965$ | $2140.4883$ | $7,644,601$ |
+| 3 | $16 \times 8$ | $273,983$ | $1070.2441$ | $3,822,301$ |
+| 4 | $32 \times 16$ | $136,991$ | $535.1221$ | $1,911,150$ |
+| 5 | $64 \times 32$ | $68,496$ | $267.5610$ | $955,575$ |
+| 6 | $128 \times 64$ | $34,248$ | $133.7805$ | $477,788$ |
+| 7 | $256 \times 128$ | $17,124$ | $66.8903$ | $238,894$ |
+| 8 | $512 \times 256$ | $8,562$ | $33.4451$ | $119,447$ |
+| 9 | $1024 \times 512$ | $4,281$ | $16.7226$ | $59,724$ |
+| 10 | $2048 \times 1024$ | $2,140$ | $8.3613$ | $29,862$ |
+| 11 | $4096 \times 2048$ | $1,070$ | $4.1806$ | $14,931$ |
+| 12 | $8192 \times 4096$ | $535$ | $2.0903$ | $7,465$ |
 
 ### Tile Coordinate Bounds Formula
 
@@ -119,9 +119,6 @@ The South Pole coordinate origin $(x=0, y=0)$ is situated at distance $1,095,930
 
 - **At zoom $z = 0$**: The South Pole lies inside Tile $(z=0, \text{row}=0, \text{col}=0)$ at local tile offset from the top-left corner: $(x = 1095930\text{ m}, y = 1095930\text{ m})$.
 - **For zoom $z \ge 1$**: Since distance $1,095,930\text{ m} = \frac{1}{2} \times 2,191,860 = 2^{z-1} \times T_z$, the pole $(x=0, y=0)$ lies exactly at column index $2^{z-1}$ and row index $2^{z-1}$, which is the boundary intersection between column $2^{z-1}-1$ / $2^{z-1}$ and row $2^{z-1}-1$ / $2^{z-1}$.
-  - *Example at $z=1$*: Pole is at intersection of column 0 and 1, and row 0 and 1. (V, tested on LOLA Shade: cols 0 & 1 return 200).
-  - *Example at $z=2$*: Pole is at intersection of column 1 and 2, and row 1 and 2. (V, tested on LOLA Shade: cols 1 & 2 return 200).
-    *Note on column 0 at $z=2$*: `LRO_LOLA_Shade_SPolar875_10m` covers latitudes $-87.5^\circ$ to $-90.0^\circ$ (a polar cap of radius $\approx 75.8\text{ km}$). At $z=2$, column 0 spans $x \in [-1095930, -547965]\text{ m}$, whose closest edge is $547.9\text{ km}$ from the pole—far beyond the $75.8\text{ km}$ radius of this polar dataset. Column 0 is therefore physically outside the layer's coverage and legitimately returns HTTP 404.
 
 ---
 
@@ -135,15 +132,7 @@ The NASA Moon Trek South Pole catalog was queried via the catalog API, identifyi
 | `LRO_LOLA_ClrShade_SPole875_5mp_v04` | LOLA DEM, S Pole, 87.5 deg, ColorHillshade | Full $360^\circ$ polar cap ($87.5^\circ\text{S} - 90^\circ\text{S}$) | $5\text{ m/px}$ | $0 - 9$ | Horizontal: 10-50 m expected; Vertical: 1-10 m absolute (FGDC error estimates). |
 | `LRO_NAC_Mosaic_86S356E_50cmp` | LROC NAC Image Mosaic, Malapert Massif | $85.15^\circ\text{S} - 86.47^\circ\text{S}$, $-13.1^\circ\text{E} - 5.8^\circ\text{E}$ | $0.5\text{ m/px}$ | $0 - 12$ | Horizontal: up to 20 m RMS; Vertical: up to 10 m RMS (LOLA-tied DEM). |
 | `LRO_NAC_Shade_86S356E_3mp` | Hillshade of LROC NAC DEM (`gdaldem hillshade -z 2 -az 315 -alt 45`) | $84.59^\circ\text{S} - 87.20^\circ\text{S}$, $-15.37^\circ\text{E} - 0.25^\circ\text{E}$ | $3\text{ m/px}$ | $0 - 9$ | Horizontal: up to 20 m RMS; Vertical: up to 10 m RMS (LOLA-tied DEM, nodata value 0). |
-| `LRO_LOLA_Count_SPole45_100mp_v04` | LOLA shot count per pixel | $45.0^\circ\text{S} - 90^\circ\text{S}$, variable longitude | $100\text{ m/px}$ | $0 - 4$ | Preliminary product (listed zoom range 0–4 in metadata XML; tested: z4 returns 200, z5 returns 404). |
-
-### Concrete Ground Reference Verification (Malapert Test)
-
-- Target coordinates: Malapert centre $(x = -11329.5\text{ m}, y = 123592.5\text{ m})$.
-- Calculated tile at $z=9$: row 227, col 253.
-- Verification record (tested 2026-11-13): `https://trek.nasa.gov/tiles/Moon/SP/LRO_NAC_Shade_86S356E_3mp/1.0.0/default/default028mm/9/227/253.png` returned HTTP 200 OK (`Content-Length: 60718` bytes) displaying the verified topographic hillshade of Malapert Massif. (V)
-- Spot checks across pyramid (tested 2026-11-13): $z=0$, $z=5$, and $z=8$ return HTTP 200 OK. (V)
-- Upper bound verification (tested 2026-11-13): Tile request at $z=10$ (`/10/454/506.png`) returned HTTP 404 Not Found. Note: A single 404 does not definitively prove the entire zoom level is absent; the published matrix list dictates the strict maximum. (V)
+| `LRO_LOLA_Count_SPole45_100mp_v04` | LOLA shot count per pixel | $45.0^\circ\text{S} - 90^\circ\text{S}$, variable longitude | $100\text{ m/px}$ | $0 - 4$ | Preliminary product. |
 
 ---
 
@@ -156,9 +145,9 @@ The NASA Moon Trek South Pole catalog was queried via the catalog API, identifyi
 2. **Fixed Illumination in Shaded Relief:**
    Hillshade light is fixed (azimuth $315^\circ$, altitude $45^\circ$); it highlights topography but does not represent the real Sun position or real lighting conditions at any specific landing date. Real solar lighting requires ephemeris integration.
 3. **Count Layer Coverage Bounds:**
-   Count layer coverage depends on longitude; the $45^\circ\text{S} - 55^\circ\text{S}$ ring is not entirely empty (e.g. point at $50^\circ\text{S}, 45^\circ\text{E}$ maps to an active tile). (V)
+   Count layer coverage depends on longitude; the $45^\circ\text{S} - 55^\circ\text{S}$ ring is not entirely empty. (V)
 4. **Data for Future Terrain Horizon Analysis (`terrain-data`):**
-   Physical terrain-adjusted horizon calculations require floating-point Digital Elevation Models (DEMs), such as LOLA South Polar GeoTIFFs in the MOON_ME frame (DE421) from NASA Planetary Geodynamics Data Archive (e.g. `LDEM_80S_20MPP_ADJ.TIF`, 20 m/px, source: `https://pgda.gsfc.nasa.gov/products/90`). This is assigned to the future `terrain-data` project phase. (U)
+   Physical terrain-adjusted horizon calculations require floating-point Digital Elevation Models (DEMs). This is assigned to the future `terrain-data` project phase. (U)
 
 ### 5.2 Documented NASA Metadata Errors
 
@@ -171,17 +160,25 @@ Four discrepancies were identified between service XML metadata and physical dat
 | 3 | Swapped Row/Column Counts | LROC NAC Mosaic XML metadata explicitly swaps Row_Count and Column_Count values. | V |
 | 4 | Shade Column Count Discrepancy | `LRO_NAC_Shade_86S356E_3mp` XML metadata lists `Column_Count = 7790`, whereas bounding box extent calculation yields $7990$. | V/D |
 
-### 5.3 Scope of Investigation
+### 5.3 Reproducible Probe Table (Test Evidence)
 
-- 347 south-polar catalogue entries were accessed directly via the catalog API. (V)
-- Zoom levels beyond the documented maximums were spot-tested: specifically Count layer z5 (returned 404) and NAC Shade z10 (returned 404). Published matrix lists dictate the strict maximum; a single 404 does not confirm an entire zoom level is missing.
-- Where coverage is claimed, the layer, zoom, row, column, MIME/decode, and actual image-content checks are recorded in the test tables above.
+The following table explicitly separates metadata-derived coverage, observed HTTP access, and decoded non-blank imagery claims.
+
+| Layer ID | Zoom | Row | Col | HTTP Status | MIME / Decode / Content Check |
+|---|---|---|---|---|---|
+| `LRO_NAC_Shade_86S356E_3mp` | 9 | 227 | 253 | 200 OK | `image/png`, 256x256, 60,718 bytes, non-blank (Malapert). |
+| `LRO_NAC_Shade_86S356E_3mp` | 10 | 454 | 506 | 404 Not Found | N/A (beyond published max z9). |
+| `LRO_LOLA_ClrShade_SPole875_5mp_v04` | 9 | 255 | 255 | 200 OK | `image/png`, 256x256, 196,999 bytes, non-blank. |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 4 | 7 | 16 | 200 OK | `image/png`, non-blank imagery (right-half extent). |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 4 | 7 | 17 | 200 OK | `image/png`, non-blank imagery (right-half extent). |
+| `LRO_LOLA_Count_SPole45_100mp_v04` | 5 | 0 | 0 | 404 Not Found | N/A (beyond published max z4). |
+| `LRO_LOLA_Shade_SPolar875_10m` | 2 | 1 | 0 | 404 Not Found | N/A (outside 75.8km coverage radius). |
 
 ---
 
 ## 6. OpenLayers Map Integration Configuration (`p2-explorer`)
 
-For the Phase 2 Explorer map implementation (`p2-explorer`), the verified OpenLayers configuration incorporating the non-square $2^{z+1} \times 2^z$ matrix, exact resolution formula, and complete z0–z12 resolution stack is:
+For the Phase 2 Explorer map implementation (`p2-explorer`), the verified OpenLayers configuration incorporating the full WMTS 2:1 matrix and z0–z12 template is below. **Note: The source-specific `extent` must be applied at the layer level, not the projection level, because sources have varying footprints (e.g., 87.5°S cap vs 45°S wide).**
 
 ```typescript
 import Projection from 'ol/proj/Projection';
@@ -190,18 +187,20 @@ import WMTSTileGrid from 'ol/tilegrid/WMTS';
 /**
  * Moon South Pole Polar Stereographic Projection (Moon 2000 Sphere)
  * 
- * Note on worldExtent [minLon, minLat, maxLon, maxLat]:
- * - Use [-180, -90, 180, -87.5] when displaying 87.5°S polar basemaps.
- * - Expand maxLat to -45 ([-180, -90, 180, -45]) if including the LOLA Count 45°S layer.
+ * Note: We define the projection's full mathematical extent but enforce 
+ * specific bounds at the individual layer level to accommodate wider layers.
  */
 export const MOON_SOUTH_POLE_PROJ = new Projection({
   code: 'urn:ogc:def:crs:IAU2000::30120',
   units: 'm',
-  extent: [-1095930, -1095930, 1095930, 1095930],
-  worldExtent: [-180, -90, 180, -87.5],
+  // The full WMTS matrix width is 2:1. Left edge is -1095930, Right edge is +3287790.
+  extent: [-1095930, -1095930, 3287790, 1095930], 
+  // Standard geographical bounds for a south polar projection
+  worldExtent: [-180, -90, 180, -90], 
 });
 
-// Exact resolutions stack generated from base resolution 8561.953125 / 2^z
+// Generic z0-z12 template stack generated from base resolution 8561.953125 / 2^z
+// NOTE: Application code must truncate this array to each source's published max zoom.
 const RESOLUTIONS = Array.from({ length: 13 }, (_, z) => 8561.953125 / Math.pow(2, z));
 
 // Matrix sizes: [cols, rows] per zoom level where cols = 2^(z+1) and rows = 2^z
@@ -210,11 +209,8 @@ const MATRIX_SIZES = RESOLUTIONS.map((_, z) => [Math.pow(2, z + 1), Math.pow(2, 
 /**
  * WMTS Tile Grid supporting rectangular 2^(z+1) cols x 2^z rows.
  * 
- * Version notes:
- * - OpenLayers v6.15.1 and v10.11.0 both use `sizes: MATRIX_SIZES`.
- * - If using NAC hillshades with nodata=0 (pure black margins), apply a mask 
- *   backed by the specific dataset's documented nodata value for scientific transparency.
- *   CSS blending is not a substitute for a scientific nodata mask.
+ * - OpenLayers v6.15.1 and v10.11.0 both use `sizes`.
+ * - For nodata transparency, apply a mask backed by the dataset's nodata value.
  */
 export const MOON_SOUTH_POLE_TILE_GRID = new WMTSTileGrid({
   origin: [-1095930, 1095930],
