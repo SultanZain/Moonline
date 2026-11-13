@@ -188,6 +188,10 @@ Purpose: compare two or three candidate locations fairly.
 - State when a site has missing or incomplete samples.
 - Do not rank sites using an invented aggregate score.
 
+The independent `/comparison-preview` uses a radar as the primary visual, with flat translucent profiles on a circular grid. Site A uses the existing selected-site accent with a solid line and circles; site B uses neutral content ink with a dashed line and diamonds. These site colors do not replace the Sun/Earth colors on scientific series. All preview axes share a labelled 0–100% range, with 25% rings. A prominent notice identifies every value as synthetic. Profile buttons toggle shapes; axis buttons update an adjacent detail panel. The exact values are always available as semantic description lists, without an HTML table. Missing values read “Unavailable” and prevent a closed profile, rather than moving its vertex to zero. Polygon area never represents an overall score. At narrower widths the detail panel stacks and metric labels precede the paired values.
+
+The product is being built for the [2026 NASA Space Apps Lunar Landing Site Navigator challenge](https://www.spaceappschallenge.org/2026/challenges/lunar-landing-site-navigator/?tab=details). Its emphasis on rapid site/date comparison guides this view; real time-to-sunset/Earthset, elevations and visibility windows require verified scientific data and must remain inspectable beyond the radar overview.
+
 ### 7.4 Methodology
 
 Purpose: make the science inspectable.

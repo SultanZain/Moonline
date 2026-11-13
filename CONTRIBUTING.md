@@ -62,6 +62,7 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Done; implementation merged in [PR #1](https://github.com/SultanZain/Moonline/pull/1) |
 | p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Ready; branch from latest `main` |
 | p2-workspace-layout | Sultan | Responsive Explorer workspace and accessible context sheet | No source-data dependency; delivery status is tracked in the task PR |
+| comparison-preview | Sultan | Explicitly illustrative radar comparison, keyboard controls and textual values | Assigned directly by Sultan; independent UI preview only, no scientific integration; delivery tracked in its PR |
 | p2-coordinates | Rameen | Define verified lunar coordinate conventions and runtime validation used by site selection | Wait for p2-data |
 | p2-explorer | Sultan | OpenLayers map, tile/error states and manual coordinate controls using verified data/validation | Wait for p2-data and p2-coordinates |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |

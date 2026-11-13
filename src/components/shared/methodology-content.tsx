@@ -15,7 +15,8 @@ export function MethodologyContent() {
       </header>
       <section className="scope-note" aria-labelledby="implementation-heading">
         <h2 id="implementation-heading">Current implementation</h2>
-        <p className="mt-2 text-sm leading-6 text-content-muted">The application foundation and navigation are implemented. Map imagery, site selection, ephemeris retrieval, visibility calculations, and comparison are not yet implemented. There are no scientific results or synthetic datasets in this workspace.</p>
+        <p className="mt-2 text-sm leading-6 text-content-muted">The application foundation and navigation are implemented. Map imagery, site selection, ephemeris retrieval, visibility calculations, and real site comparison are not yet implemented. There are no scientific results in this workspace. The comparison preview uses clearly labelled synthetic UI fixtures.</p>
+        <Link href="/comparison-preview" className="source-link mt-3">Explore the illustrative comparison <ArrowUpRight aria-hidden="true" /></Link>
       </section>
       <div className="methodology-grid">
         <section className="workspace-panel" aria-labelledby="sources-heading">
