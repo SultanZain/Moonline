@@ -16,7 +16,7 @@ export function MethodologyContent() {
       <section className="scope-note" aria-labelledby="implementation-heading">
         <h2 id="implementation-heading">Current implementation</h2>
         <p className="mt-2 text-sm leading-6 text-content-muted">Explorer and Site comparison use live Sun/Earth geometry for up to three sites. Enter coordinates or bring Explorer candidates, choose common settings, inspect visibility timelines and download reports with inputs, sources and unavailable results.</p>
-        <Link href="/comparison-preview" className="source-link mt-3">Compare sites <ArrowUpRight aria-hidden="true" /></Link>
+        <Link href="/comparison" className="source-link mt-3">Compare sites <ArrowUpRight aria-hidden="true" /></Link>
       </section>
       <div className="methodology-grid">
         <section className="workspace-panel" aria-labelledby="sources-heading">

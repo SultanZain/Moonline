@@ -17,6 +17,7 @@ type SiteContextProps = {
   location: MapLocation | null;
   candidates: MapLocation[];
   missionTime: string;
+  comparisonHref: string;
   onTimeChange: (time: string) => void;
   onNavigate: (location: MapLocation) => void;
   onAdd: () => void;
@@ -29,7 +30,7 @@ type SiteContextProps = {
   children: ReactNode;
 };
 
-export function SiteContext({ location, candidates, missionTime, onTimeChange, onNavigate, onAdd, onRemove, onFit, onClear, onUndo, clearedCount, analysisControls, children }: SiteContextProps) {
+export function SiteContext({ location, candidates, missionTime, comparisonHref, onTimeChange, onNavigate, onAdd, onRemove, onFit, onClear, onUndo, clearedCount, analysisControls, children }: SiteContextProps) {
   const context = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const undoButton = useRef<HTMLButtonElement>(null);
@@ -120,6 +121,7 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
               </li>
             ))}
           </ol>
+          {candidates.length >= 2 ? <Button asChild className="mt-3 w-full"><Link href={comparisonHref}>Compare candidates <ArrowUpRight aria-hidden="true" /></Link></Button> : null}
           {clearedCount > 0 ? <div className="flex items-center justify-between gap-2">
             <p role="status" className="text-xs text-content-muted">{clearedCount} {clearedCount === 1 ? "candidate" : "candidates"} cleared</p>
             <Button ref={undoButton} variant="ghost" className="px-2 text-xs" aria-label="Undo clear candidates" onClick={() => {

@@ -132,6 +132,20 @@ export function explorerSessionLink(session: ExplorerSession, href: string): str
   return url.toString();
 }
 
+/** Retain only validated exploration inputs in this browser tab. */
+export function saveLastExplorerSession(session: ExplorerSession): void {
+  try {
+    const search = new URL(explorerSessionLink(session, "https://moonline.invalid/explorer")).search;
+    if (readExplorerSession(search).status === "invalid") return;
+    if (window.sessionStorage.getItem("moonline-exploration") !== search) window.sessionStorage.setItem("moonline-exploration", search);
+  } catch { /* URL persistence continues when browser storage is unavailable. */ }
+}
+
+export function readLastExplorerSession(): SessionRead {
+  try { return readExplorerSession(window.sessionStorage.getItem("moonline-exploration") ?? ""); }
+  catch { return { status: "empty" }; }
+}
+
 export function candidateFileContents(session: ExplorerSession): string {
   return JSON.stringify({
     kind: "moonline-candidate-locations", version: 1, coordinateSystem: "Moon 2000 spherical map",

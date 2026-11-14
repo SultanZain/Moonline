@@ -134,7 +134,7 @@ test.describe("portable Explorer workflow", () => {
     await expect(page.getByRole("button", { name: "Relief", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("reload and a return from Methodology preserve the exploration", async ({ page }) => {
+  test("reload and Methodology's Back to Explorer link restore the saved exploration", async ({ page }) => {
     await page.goto("/explorer"); await select(page, "-20", "12");
     await inspector(page).getByRole("button", { name: "Add candidate", exact: true }).click();
     await page.locator("#mission-time").fill("2026-11-14T09:10");
@@ -143,8 +143,18 @@ test.describe("portable Explorer workflow", () => {
     await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["-20.0000°", "12.0000°"]);
     await expect(candidates(page)).toHaveCount(1); await expect(page.locator("#mission-time")).toHaveValue("2026-11-14T09:10");
     await inspector(page).getByRole("link", { name: "Methodology", exact: true }).click();
-    await expect(page).toHaveURL(/\/methodology$/); await page.goBack();
+    await expect(page).toHaveURL(/\/methodology$/);
+    await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+    await expect(page).toHaveURL(/\/explorer(?:\?|$)/);
     await expect(candidates(page)).toHaveCount(1); await expect(page.locator("#mission-time")).toHaveValue("2026-11-14T09:10");
+    await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["-20.0000\u00b0", "12.0000\u00b0"]);
+    await page.locator("#mission-time").fill("");
+    await inspector(page).getByRole("link", { name: "Methodology", exact: true }).click();
+    await expect(page).toHaveURL(/\/methodology$/);
+    await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+    await expect(candidates(page)).toHaveCount(1);
+    await expect(page.locator("#mission-time")).toHaveValue("");
+    await expect(page.getByRole("region", { name: "Analysis results", exact: true })).toHaveCount(0);
   });
 
   test("import previews and cancellation preserve work; confirmed imports can be undone through Back", async ({ page }) => {
@@ -194,6 +204,8 @@ test.describe("portable Explorer workflow", () => {
   });
 
   test("invalid shared state opens a working default map with an explicit error", async ({ page }) => {
+    await page.addInitScript(saved => sessionStorage.setItem("moonline-exploration", saved),
+      `?${new URLSearchParams({ session: JSON.stringify(rawSession) })}`);
     const query = new URLSearchParams({ session: JSON.stringify({ ...rawSession, view: { ...rawSession.view, zoom: 13 } }) });
     await page.goto(`/explorer?${query}`);
     const exploration = page.getByRole("region", { name: "Lunar exploration", exact: true });
@@ -202,6 +214,39 @@ test.describe("portable Explorer workflow", () => {
     await expect(page.getByLabel("Map zoom")).toHaveText("z2 / 8"); await expect(inspector(page)).toHaveCount(0);
     await page.getByRole("button", { name: "Dismiss link error", exact: true }).click(); await expect(exploration.getByRole("alert")).toHaveCount(0);
     await select(page, "0", "10"); await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["0.0000°", "10.0000°"]);
+  });
+
+  test("a valid shared URL takes priority over an older saved exploration", async ({ page }) => {
+    await page.addInitScript(saved => sessionStorage.setItem("moonline-exploration", saved),
+      `?${new URLSearchParams({ session: JSON.stringify(rawSession) })}`);
+    const explicit = {
+      version: 1, selected: { latitude: 0, longitude: 10, name: "Shared location" },
+      sites: [{ latitude: 0, longitude: 10, name: "Shared location" }], missionTimeUtc: "2026-11-15T09:10:00.000Z",
+      view: { mode: "global", basemap: "imagery", center: [10, 0], zoom: 3, overlays: [] },
+    };
+    await page.goto(`/explorer?${new URLSearchParams({ session: JSON.stringify(explicit) })}`);
+    await expect(candidates(page)).toHaveCount(1);
+    await expect(candidates(page)).toContainText("Shared location");
+    await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["0.0000\u00b0", "10.0000\u00b0"]);
+    await expect(page.locator("#mission-time")).toHaveValue("2026-11-15T09:10");
+    await expect(page.getByLabel("Map zoom")).toHaveText("z3 / 8");
+    const restored = readExplorerSession(new URL(page.url()).search);
+    expect(restored.status).toBe("ready");
+    if (restored.status !== "ready") throw new Error("Valid shared exploration was not restored.");
+    expect(restored.session.sites).toEqual(explicit.sites);
+    expect(restored.session.selected).toEqual(explicit.selected);
+    expect(restored.session.missionTimeUtc).toBe(explicit.missionTimeUtc);
+  });
+
+  test("invalid saved exploration is ignored when the Explorer URL has no session", async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.setItem("moonline-exploration", "?session={"));
+    await page.goto("/explorer");
+    await expect(page.locator(".ol-viewport")).toHaveCount(1);
+    await expect(page.getByLabel("Map zoom")).toHaveText("z2 / 8");
+    await expect(inspector(page)).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Lunar exploration", exact: true }).getByRole("alert")).toHaveCount(0);
+    await select(page, "0", "10");
+    await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["0.0000\u00b0", "10.0000\u00b0"]);
   });
 
   test("mobile imports remain usable in the fullscreen sheet", async ({ page }) => {
@@ -242,7 +287,8 @@ test.describe("portable Explorer workflow", () => {
       selected: { latitude: -85.81, longitude: -3.6 },
       view: { mode: "south", basemap: "relief", zoom: 8, center: [-11_329.5, 123_592.5], overlays: [{ id: "mosaic", opacity: 1 }] },
     });
-    await page.goto("/explorer"); await page.getByRole("button", { name: "Open site inspector", exact: true }).click();
+    await page.goto("/explorer");
+    await expect(inspector(page)).toBeVisible();
     await page.getByLabel("Candidate file", { exact: true }).setInputFiles({ name: "moonline-candidates.json", mimeType: "application/json", buffer: Buffer.from(contents) });
     await page.getByRole("button", { name: "Import", exact: true }).click();
     await expect(inspector(page).locator(".site-coordinates dd")).toHaveText(["-85.8100°", "-3.6000°"]);
