@@ -110,6 +110,7 @@
   .map-start-error { position: absolute; inset: 40% 1rem auto; display: grid; justify-items: center; gap: 1rem; font-size: 0.875rem; color: var(--content-muted); }
   .map-fullscreen-error { position: absolute; bottom: 14rem; right: 1rem; padding: 0.75rem; font-size: 0.75rem; color: var(--warning); }
   .map-inspector { position: absolute; top: 5rem; right: 1rem; z-index: 15; width: 20rem; max-height: calc(100% - 19rem); padding: 1rem; overflow: auto; overscroll-behavior: contain; }
+  .lunar-map-workspace[data-candidates="multiple"] .map-inspector { max-height: calc(100% - 22rem); }
   .site-context { display: flex; flex-direction: column; gap: 1rem; }
   .site-coordinates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   .site-coordinates dt { font-size: 0.75rem; color: var(--content-muted); }
@@ -117,6 +118,7 @@
   .candidate-section { border-top: 1px solid var(--border); padding-top: 1rem; }
   .candidate-row { display: flex; align-items: center; }
   .candidate-index { display: flex; width: 1.5rem; height: 1.5rem; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid var(--content-muted); border-radius: 50%; font-size: 0.75rem; }
+  .candidate-row [aria-current="location"] .candidate-index { color: var(--accent); border-color: var(--accent); }
   .map-site-trigger { position: absolute; bottom: 2rem; left: 50%; z-index: 10; transform: translateX(-50%); max-width: calc(100% - 20rem); }
   .map-readout { position: absolute; bottom: 1rem; left: 1rem; z-index: 10; padding: 0.5rem 0.75rem; font-size: 0.75rem; line-height: 1.5; pointer-events: none; }
   .lunar-map-scale { min-height: 1.5rem; margin-block: 0.25rem; }
@@ -125,37 +127,68 @@
   .map-viewport-controls { position: absolute; bottom: 2.5rem; right: 1rem; z-index: 10; display: grid; }
   .map-attribution { position: absolute; bottom: 0.5rem; right: 1rem; z-index: 10; display: flex; gap: 0.75rem; font-size: 0.75rem; padding: 0.125rem 0.375rem; background: var(--surface); color: var(--content-muted); }
   .map-attribution a:hover { text-decoration: underline; }
+  .mission-controls { display: flex; flex-direction: column; gap: 0.875rem; }
+  .mission-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .mission-settings label { display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--content-muted); }
+  .mission-settings select { width: 100%; min-height: 2.75rem; padding-inline: 0.625rem; color: var(--content); background: var(--surface); border: 1px solid var(--input); border-radius: var(--radius); font-size: 0.8125rem; }
+  .mission-frame-choice { display: flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; font-size: 0.75rem; color: var(--content-muted); cursor: pointer; }
+  .mission-frame-choice input { width: 1rem; height: 1rem; flex-shrink: 0; accent-color: var(--accent); }
+  .mission-frame-choice a { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; text-decoration: underline; }
+  .mission-result { border-top: 1px solid var(--border); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .mission-target { display: flex; flex-direction: column; gap: 0.5rem; }
+  .mission-target h3 { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
+  .mission-target h3 svg { width: 1rem; height: 1rem; }
+  .mission-angles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .mission-angles dt { font-size: 0.6875rem; color: var(--content-muted); }
+  .mission-angles dd { margin-top: 0.25rem; font-size: 1.375rem; font-variant-numeric: tabular-nums; }
+  .mission-assessment { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; font-size: 0.6875rem; color: var(--content-muted); }
+  .mission-timeline { position: absolute; z-index: 16; left: 1rem; right: 5rem; bottom: 1rem; max-height: min(24rem, 60%); overflow: auto; }
+  .mission-timeline-heading { display: flex; align-items: center; gap: 0.75rem; }
+  .mission-timeline-heading > button:last-child { margin-left: auto; }
+  .mission-timeline-content { padding: 0 0.75rem 0.5rem; }
+  .mission-timeline-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+  .mission-timeline-toolbar button[aria-pressed="true"] { color: var(--content); background: var(--surface-raised); }
+  .mission-elevation-chart { width: 100%; height: 150px; }
+  .mission-time-navigation { display: flex; align-items: center; gap: 0.25rem; }
+  .mission-time-navigation input { width: 100%; min-height: 2.75rem; accent-color: var(--accent); }
+  .mission-comparison-values { display: flex; flex-wrap: wrap; gap: 0.375rem 1rem; }
+  .mission-comparison-values > div { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6875rem; color: var(--content-muted); }
+  .mission-comparison-values button { max-width: 14rem; }
+  .mission-timeline-note { margin-top: 0.25rem; font-size: 0.6875rem; color: var(--content-subtle); }
+  .mission-windows { margin-block: 0.5rem; font-size: 0.75rem; color: var(--content-muted); }
+  .mission-windows summary { min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; }
+  .mission-sources summary { min-height: 2.75rem; display: flex; align-items: center; cursor: pointer; }
+  .mission-windows section { padding-block: 0.5rem; border-top: 1px solid var(--border); }
+  .mission-windows h3 { color: var(--content); font-weight: 500; }
+  .mission-windows li, .mission-windows p { margin-top: 0.375rem; overflow-wrap: anywhere; }
+  .lunar-map-workspace[data-inspector="open"] .mission-timeline { right: 22rem; }
+  .lunar-map-workspace[data-timeline="collapsed"] .map-readout { bottom: 4.75rem; }
+  .lunar-map-workspace[data-timeline="collapsed"] .map-site-trigger { bottom: 5rem; }
+  .lunar-map-workspace[data-timeline="expanded"] .map-readout { bottom: min(26rem, 62%); }
+  .lunar-map-workspace[data-timeline="expanded"] .map-site-trigger { bottom: min(26rem, 62%); }
   .scope-note { max-width: 64rem; }
   .source-link { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
   .source-link svg { width: 1rem; height: 1rem; }
   .source-link:hover { color: var(--content-muted); }
   .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 60; transform: translateY(-200%); background: var(--primary); color: var(--primary-foreground); padding: 0.75rem 1rem; border-radius: var(--radius); }
   .skip-link:focus { transform: translateY(0); }
-  /* Comparison = fluid radar + 24px gap + a 320px axis detail on wide screens. */
-  .comparison-overview { display: grid; gap: var(--workspace-gap); align-items: start; }
-  .comparison-preview-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem var(--workspace-pad); border-radius: var(--radius); background: var(--surface-raised); }
-  .comparison-preview-note > div:first-child { max-width: 42rem; }
-  .comparison-figure { margin: 0; }
-  .comparison-radar { height: 360px; width: 100%; }
-  .comparison-chart-loading { display: grid; place-content: center; height: 360px; font-size: 0.875rem; color: var(--content-muted); }
-  .comparison-swatch { display: inline-block; width: 20px; border-top: 2px solid; }
-  .comparison-swatch-a { border-color: var(--comparison-a); }
-  .comparison-swatch-b { border-color: var(--comparison-b); border-top-style: dashed; }
-  .comparison-axis-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
-  .comparison-value { margin-top: 0.5rem; font-size: 2rem; line-height: 2.5rem; font-weight: 500; }
-  .comparison-value[data-state="unavailable"] { font-size: 1rem; }
-  .comparison-value-a { color: var(--comparison-a); }
-  .comparison-value-b { color: var(--comparison-b); }
-  .comparison-metric { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem; border-radius: var(--radius); }
-  .comparison-metric-selected { background: var(--surface-raised); }
-  .comparison-metric-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; min-width: 15rem; text-align: right; padding-right: 0.5rem; }
-  .comparison-metric-values dd { margin-top: 0.25rem; }
-  .comparison-footer { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 1rem; }
-  .comparison-footer p { max-width: 42rem; }
+  .comparison-analysis { display: grid; gap: var(--workspace-gap); align-items: start; }
+  .comparison-site-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 0.75rem; margin-top: 1rem; }
+  .comparison-site-list li { display: flex; align-items: center; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); }
+  .comparison-site-list [aria-pressed="true"] { background: var(--surface-raised); }
+  .comparison-add-site { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 0.75rem; margin-top: 1.25rem; }
+  .comparison-add-site label { display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--content-muted); }
+  .comparison-workspace .mission-timeline { position: static; max-height: none; padding: 0.75rem; }
+  .comparison-workspace .mission-elevation-chart { height: 300px; }
+  .comparison-workspace .mission-comparison-values { display: grid; gap: 0.5rem; }
+  .comparison-workspace .mission-comparison-values > div { justify-content: space-between; font-size: 0.75rem; }
+  .comparison-workspace .mission-comparison-values button { max-width: 45%; }
+  .comparison-empty { min-height: 20rem; display: flex; flex-direction: column; justify-content: center; }
 }
 
 @media (min-width: 768px) {
   .methodology-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comparison-analysis { grid-template-columns: 20rem minmax(0, 1fr); }
 }
 @media (min-width: 1024px) {
   .application-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
@@ -170,9 +203,6 @@
   .application-shell:has(.mission-workspace) .workspace-sidebar .navigation-label { display: none; }
   .application-shell:has(.mission-workspace) .workspace-sidebar nav a { width: 2.75rem; justify-content: center; padding-inline: 0; }
 }
-@media (min-width: 1280px) {
-  .comparison-overview { grid-template-columns: minmax(0, 1fr) 20rem; }
-}
 @media (max-width: 767px) {
   :root { --workspace-pad: 1rem; --workspace-gap: 1rem; }
   .workspace-main { padding-block: 1.5rem; }
@@ -183,11 +213,25 @@
   .map-readout { left: 0.75rem; bottom: 0.75rem; max-width: calc(100% - 7.5rem); }
   .map-readout p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .map-viewport-controls { grid-template-columns: repeat(2, 2.75rem); right: 0.75rem; bottom: 2.25rem; }
+  .map-fit-candidates { grid-column: 1 / -1; width: 100%; }
   .map-attribution { right: 0.75rem; }
   .map-site-trigger { left: 0.75rem; bottom: 8rem; transform: none; max-width: calc(100% - 1.5rem); }
+  .lunar-map-workspace[data-candidates="multiple"] .map-site-trigger { bottom: 10.75rem; }
+  .mission-timeline { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; max-height: min(55%, 20rem); }
+  .lunar-map-workspace[data-inspector="open"] .mission-timeline { right: 0.75rem; }
+  .mission-timeline-toolbar { flex-wrap: wrap; }
+  .mission-elevation-chart { height: 135px; }
+  .mission-comparison-values { display: block; }
+  .mission-comparison-values > div { justify-content: space-between; }
+  .mission-comparison-values button { max-width: 40%; }
+  .lunar-map-workspace[data-timeline="collapsed"] .map-site-trigger { bottom: 5rem; max-width: calc(100% - 7.5rem); }
+  .lunar-map-workspace[data-timeline="collapsed"] .map-viewport-controls { bottom: 5rem; }
+  .lunar-map-workspace[data-timeline="expanded"] .map-site-trigger { bottom: calc(min(55%, 20rem) + 1.25rem); max-width: calc(100% - 7.5rem); }
+  .lunar-map-workspace[data-timeline="expanded"] .map-readout { display: none; }
+  .lunar-map-workspace[data-timeline="expanded"] .map-viewport-controls { bottom: calc(min(55%, 20rem) + 1.25rem); }
+  .lunar-map-workspace[data-timeline="expanded"] .map-fit-candidates { display: none; }
   .map-inspector-sheet { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
-  .comparison-radar, .comparison-chart-loading { height: 320px; }
-  .comparison-metric { align-items: stretch; flex-direction: column; gap: 0.25rem; }
-  .comparison-metric-values { min-width: 0; gap: 1rem; padding: 0 0.75rem 0.5rem; text-align: left; }
-  .comparison-value { font-size: 1.5rem; line-height: 2rem; }
+  .comparison-add-site { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comparison-workspace .mission-elevation-chart { height: 220px; }
+  .comparison-workspace .mission-comparison-values > div { flex-wrap: wrap; }
 }

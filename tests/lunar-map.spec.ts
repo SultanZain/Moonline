@@ -60,7 +60,7 @@ test("the map fills the workspace and context stays hidden until useful", async 
   await expect(inspector(page)).toHaveCount(0);
   await expect(page.getByText("Not calculated", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Open site inspector" }).click();
-  await expect(inspector(page).getByText("Select a location on the map or search for coordinates.")).toBeVisible();
+  await expect(inspector(page).getByText("Select a location.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Analyze", exact: true })).toHaveCount(0);
 });
 
@@ -70,7 +70,8 @@ test("manual coordinates select a site, center the map and use lunar distances",
   await goTo(page, "-85.81", "-3.6");
   await expectLocation(page, "-85.8100", "-3.6000");
   await expect(page.getByRole("button", { name: "South pole", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Sun and Earth analysis is not connected.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Mission analysis", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analyze", exact: true })).toBeDisabled();
   const scale = page.locator(".ol-scale-line-inner");
   await expect(scale).toBeVisible();
   const text = await scale.innerText();
@@ -109,8 +110,10 @@ test("numeric search bypasses nomenclature and normalizes equivalent longitude b
   await page.getByRole("combobox").fill("0, 180"); await page.getByRole("combobox").press("Enter");
   await expectLocation(page, "0.0000", "-180.0000");
   await page.getByRole("button", { name: "Add candidate", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Locate candidate 1: 0.0000°, -180.0000°", exact: true })).toBeFocused();
   await goTo(page, "0", "-180");
-  await expect(page.getByRole("button", { name: "Candidate added", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Add candidate", exact: true })).toHaveCount(0);
+  await expect(inspector(page).locator('[aria-current="location"] .candidate-index')).toHaveText("1");
   expect(names).toEqual([]);
 });
 
@@ -315,7 +318,8 @@ test("three candidate sites and their explicit UTC plan can be exported without 
     await goTo(page, latitude, longitude); await page.getByRole("button", { name: "Add candidate", exact: true }).click();
   }
   await page.locator("#mission-time").fill("2026-11-13T12:30");
-  await expect(page.getByRole("button", { name: "Candidate added", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Add candidate", exact: true })).toHaveCount(0);
+  await expect(inspector(page).locator('[aria-current="location"] .candidate-index')).toHaveText("3");
   const downloadPromise = page.waitForEvent("download"); await page.getByRole("button", { name: "Export sites", exact: true }).click();
   const path = await (await downloadPromise).path(); if (!path) throw new Error("Download unavailable");
   const exported: unknown = JSON.parse(readFileSync(path, "utf8"));
