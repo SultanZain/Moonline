@@ -18,6 +18,18 @@ const scientificAreas = [
   "tests/science/", "docs/science/",
 ];
 
+// Keep this coordinated integration assignment limited to its branch and exact files.
+const missionWorkflowBranch = "sultan/mission-workflow-local-analysis";
+const missionWorkflowFiles = new Set([
+  "src/lib/api/lunar-horizons.ts",
+  "src/lib/science/mission-analysis.ts",
+  "src/lib/validation/mission-analysis.ts",
+  "src/types/mission-analysis.ts",
+  "tests/science/mission-analysis.spec.ts",
+  "tests/science/fixtures/horizons-sun.json",
+  "tests/science/fixtures/horizons-earth.json",
+]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -29,6 +41,7 @@ export function checkOwnership(author: unknown, branch: unknown, files: readonly
     return { ok: false, message: `Use a ${contributor}/<task-id>-<slug> branch for this contributor.` };
   }
   for (const file of files) {
+    if (contributor === "sultan" && branch === missionWorkflowBranch && missionWorkflowFiles.has(file)) continue;
     const scientific = scientificAreas.some(area => file.startsWith(area));
     if ((contributor === "rameen") !== scientific) {
       return { ok: false, message: `${contributor} cannot change ${JSON.stringify(file)} without a coordinated ownership transfer.` };

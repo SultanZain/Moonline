@@ -29,6 +29,47 @@ test("reject cross-owner paths and misleading prefix matches", () => {
   assert.equal(checkOwnership("SultanZain", "sultan/p2-explorer", ["src/lib/science/visibility.ts"]).ok, false);
 });
 
+const missionWorkflowFiles = [
+  "src/lib/api/lunar-horizons.ts",
+  "src/lib/science/mission-analysis.ts",
+  "src/lib/validation/mission-analysis.ts",
+  "src/types/mission-analysis.ts",
+  "tests/science/mission-analysis.spec.ts",
+  "tests/science/fixtures/horizons-sun.json",
+  "tests/science/fixtures/horizons-earth.json",
+];
+
+test("assigned mission branch permits its exact scientific files with application changes", () => {
+  assert.equal(checkOwnership("SultanZain", "sultan/mission-workflow-local-analysis", [
+    ...missionWorkflowFiles, "src/app/api/analysis/route.ts", "src/components/explorer/mission-controls.tsx",
+  ]).ok, true);
+});
+
+test("mission scientific files remain restricted on other Sultan branches", () => {
+  for (const branch of ["sultan/task", "sultan/mission-workflow-local-analysis-extra", "sultan/mission-workflow-local-analy"]) {
+    for (const file of missionWorkflowFiles) assert.equal(checkOwnership("SultanZain", branch, [file]).ok, false);
+  }
+  assert.equal(checkOwnership("Mumei-Nocturnal", "sultan/mission-workflow-local-analysis", missionWorkflowFiles).ok, false);
+});
+
+test("mission assignment rejects neighboring files and mixed out-of-scope changes", () => {
+  for (const file of [
+    "src/lib/api/lunar-horizons.ts.old", "src/lib/api/lunar-horizons.ts/child",
+    "src/types/lunar-observer.ts", "tests/science/lunar-observer.spec.ts",
+    "tests/science/fixtures/horizons-mars.json", "tests/science/fixtures/horizons-sun.json.old",
+    "docs/science/lunar-coordinates.md", "src/lib/science/visibility.ts",
+  ]) {
+    assert.equal(checkOwnership("SultanZain", "sultan/mission-workflow-local-analysis", [missionWorkflowFiles[0], file]).ok, false);
+  }
+});
+
+test("Rameen's observer contract keeps its original branch and path permissions", () => {
+  assert.equal(checkOwnership("Mumei-Nocturnal", "rameen/p2-coordinates", [
+    "src/lib/validation/lunar-observer.ts", "src/types/lunar-observer.ts",
+    "tests/science/lunar-observer.spec.ts", "docs/science/lunar-coordinates.md",
+  ]).ok, true);
+});
+
 test("reject unknown identities, main and another contributor's branch", () => {
   for (const [author, branch] of [["unknown", "sultan/task"], ["SultanZain", "main"], ["Mumei-Nocturnal", "sultan/task"], ["SultanZain", "sultan/"]]) {
     assert.equal(checkOwnership(author, branch, []).ok, false);
