@@ -1,23 +1,22 @@
 
 /**
  * @file src/types/lunar-observer.ts
- * @description Scientific types for the MOONLINE lunar observer contract.
+ * @description Types for the MOONLINE lunar observer input contract.
  *
- * Defines lunar map coordinates, height and datum information,
+ * Defines coordinate conventions, observer height and datum,
  * reference-frame compatibility, pole behavior, provider readiness,
- * and runtime validation results.
+ * and structured runtime validation results.
  *
  * @author Sultan
  *
  * Ownership: Data & Science
- * Consumers: Explorer UI, scientific validation, future ephemeris integration.
  *
  * IMPORTANT:
- * Moon Trek map coordinates must not be assumed to be directly compatible
- * with a JPL Horizons lunar observer frame.
+ * Moon Trek map coordinates are not automatically interchangeable
+ * with JPL Horizons lunar reference frames.
  *
- * A verified coordinate transformation is required before ephemeris use.
- * An unavailable transformation must remain explicitly unavailable.
+ * A verified transformation is required before ephemeris calculations.
+ * Unknown or unavailable scientific information must remain explicit.
  */
 
 /* -------------------------------------------------------------------------- */
@@ -27,22 +26,20 @@
 /**
  * Coordinate system used by the current Moonline Explorer map.
  *
- * These values describe the map input convention. They do not establish
- * compatibility with a scientific ephemeris reference frame.
+ * This identifies the map coordinate source, not an ephemeris frame.
  */
 export type LunarCoordinateSystem = 'MOON_TREK_MAP';
 
 /**
- * Longitude direction used by Moonline map coordinates.
+ * Canonical longitude convention used by normalized observer coordinates.
  */
 export type LunarLongitudeConvention = 'positive_east';
 
 /**
- * Supported lunar reference-frame identifiers.
+ * Reference frames relevant to lunar scientific calculations.
  *
- * These frames are distinct and must not be treated as interchangeable.
- * Their inclusion does not prove that a transformation from Moon Trek
- * map coordinates has been established.
+ * MOON_ME, MOON_PA, and IAU_MOON are distinct frames.
+ * They must not be treated as interchangeable without a verified transform.
  */
 export type LunarReferenceFrame =
   | 'MOON_ME'
@@ -50,27 +47,21 @@ export type LunarReferenceFrame =
   | 'IAU_MOON';
 
 /**
- * Untrusted coordinate input after its structure has been identified.
+ * Raw coordinate input after the runtime boundary has been validated.
+ *
+ * Latitude is in degrees within [-90, +90].
+ * Longitude is normalized to [-180, +180).
  */
 export interface LunarCoordinateInput {
-  /** Latitude in degrees, within [-90, +90]. */
   latitudeDeg: number;
-
-  /** Longitude in degrees, canonical range [-180, +180). */
   longitudeDeg: number;
-
-  /** Coordinate system from which the map coordinates originate. */
   coordinateSystem: LunarCoordinateSystem;
-
-  /** Direction in which longitude increases. */
   longitudeConvention: LunarLongitudeConvention;
 }
 
 /**
- * Validated coordinates without a complete observer height.
- *
- * This type is useful when a map selection is valid but the user
- * has not yet supplied all required observer inputs.
+ * Validated map coordinates that can exist independently
+ * of a complete observer height.
  */
 export interface ValidatedLunarCoordinates {
   latitudeDeg: number;
@@ -86,10 +77,11 @@ export interface ValidatedLunarCoordinates {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Assessment of a coordinate transformation between reference frames.
+ * Records whether the map coordinate source has a verified
+ * transformation into a scientific lunar reference frame.
  *
- * A verified result requires an actual documented transformation and
- * supporting evidence. Otherwise, compatibility must remain unavailable.
+ * A verified result requires a real, documented transformation.
+ * A frame name alone is not proof of compatibility.
  */
 export type LunarFrameCompatibility =
   | {
@@ -106,34 +98,35 @@ export type LunarFrameCompatibility =
     };
 
 /* -------------------------------------------------------------------------- */
-/* Height and datum                                                            */
+/* Height and datum                                                           */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Surface relative to which the supplied height is measured.
+ * Reference surface relative to which observer height is measured.
  *
  * reference_sphere:
- * Height relative to the application's documented lunar reference sphere.
+ * Height relative to the application's lunar reference sphere.
  *
  * terrain_surface:
- * Height relative to a documented local terrain surface.
+ * Height above a documented local terrain surface.
  */
 export type LunarHeightDatum =
   | 'reference_sphere'
   | 'terrain_surface';
 
 /**
- * Scientific interpretation of the supplied height.
+ * Meaning of a supplied observer height.
  *
  * reference_surface_zero:
- * Explicitly selected zero height on the reference sphere.
- * This is not a measured terrain elevation.
+ * Explicitly selected zero metres on the reference sphere.
+ * It is not measured terrain elevation.
  *
  * reference_surface_offset:
- * Explicit offset above or below the reference sphere.
+ * An offset above or below the reference sphere.
  *
  * measured_terrain_elevation:
- * Terrain elevation derived from a documented elevation dataset.
+ * Terrain elevation measured relative to the reference sphere,
+ * using a documented elevation data source.
  *
  * height_above_terrain:
  * Observer height above a documented local terrain surface.
@@ -145,34 +138,33 @@ export type LunarHeightInterpretation =
   | 'height_above_terrain';
 
 /**
- * Explicit observer height input.
+ * Validated observer height input.
  *
- * heightMeters must be a finite number.
- * Missing or unknown height must never be silently replaced with zero.
+ * Missing height must never be silently converted to zero.
  */
 export interface LunarHeightInput {
   /** Height in metres relative to the declared datum. */
   heightMeters: number;
 
-  /** Surface relative to which heightMeters is measured. */
+  /** Surface relative to which the height is defined. */
   heightDatum: LunarHeightDatum;
 
-  /** Scientific meaning of the supplied height. */
+  /** Scientific interpretation of the height. */
   heightInterpretation: LunarHeightInterpretation;
 
-  /** Optional dataset or source identifier. */
+  /** Optional provenance for the supplied height. */
   heightSource?: string | null;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Reference sphere                                                            */
+/* Lunar reference sphere                                                     */
 /* -------------------------------------------------------------------------- */
 
 /**
  * Reference sphere used by the current Moonline map convention.
  *
- * The radius describes the map reference sphere. It does not establish
- * compatibility with a provider reference ellipsoid or frame.
+ * Its radius describes the map model. It does not establish
+ * terrain elevation or ephemeris-frame compatibility.
  */
 export interface LunarReferenceSphere {
   model: 'MOON_2000_SPHERE';
@@ -180,7 +172,7 @@ export interface LunarReferenceSphere {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Pole and azimuth behavior                                                   */
+/* Pole and azimuth behavior                                                  */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -192,10 +184,10 @@ export type LunarPoleStatus =
   | 'south_pole';
 
 /**
- * Local astronomical azimuth definition.
+ * Local azimuth definition.
  *
- * At an exact pole, a unique azimuth requires an explicitly adopted
- * reference meridian or local orientation.
+ * At an exact pole, azimuth remains undefined unless a separate
+ * orientation convention is explicitly adopted.
  */
 export type LunarAzimuthDefinition =
   | {
@@ -208,16 +200,14 @@ export type LunarAzimuthDefinition =
     };
 
 /* -------------------------------------------------------------------------- */
-/* Ephemeris provider compatibility                                            */
+/* Provider compatibility                                                     */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Assessment of future JPL Horizons observer compatibility.
+ * Indicates whether the observer is ready for a provider query.
  *
- * A verified status must only be produced after the complete observer
- * configuration and coordinate conventions have been independently checked.
- *
- * A complete observer does not automatically imply provider readiness.
+ * A complete local observer does not automatically imply that
+ * JPL Horizons compatibility has been verified.
  */
 export type LunarProviderCompatibility =
   | {
@@ -238,51 +228,51 @@ export type LunarProviderCompatibility =
 /* -------------------------------------------------------------------------- */
 
 /**
- * Fully validated lunar observer input.
+ * Complete validated lunar observer.
  *
- * All required coordinate and height fields must be present and valid.
+ * All required coordinates and height information must be present.
+ * Frame and provider compatibility can still be unavailable.
  *
- * Provider compatibility can still be unavailable. This type alone
- * does not authorize or perform an ephemeris calculation.
+ * This type does not perform or authorize an ephemeris calculation.
  */
 export interface ValidatedLunarObserver {
   /** Optional user-provided site name. */
   name: string | null;
 
-  /** Original coordinate convention represented in normalized form. */
+  /** Normalized coordinate input. */
   coordinates: LunarCoordinateInput;
 
-  /** Canonical latitude in degrees. */
+  /** Latitude in degrees. */
   latitudeDeg: number;
 
-  /** Canonical positive-east longitude in [-180, +180). */
+  /** Positive-east longitude in [-180, +180). */
   longitudeDeg: number;
 
-  /** Explicit observer height and its interpretation. */
+  /** Explicit observer height and datum. */
   height: LunarHeightInput;
 
-  /** Application map reference-sphere model. */
+  /** Application reference-sphere model. */
   referenceSphere: LunarReferenceSphere;
 
   /** Exact-pole classification. */
   poleStatus: LunarPoleStatus;
 
-  /** Local astronomical azimuth definition. */
+  /** Local azimuth definition. */
   azimuth: LunarAzimuthDefinition;
 
-  /** Verified or unavailable reference-frame relationship. */
+  /** Map-to-scientific-frame compatibility. */
   frameCompatibility: LunarFrameCompatibility;
 
-  /** Verified or unavailable future provider compatibility. */
+  /** JPL Horizons provider compatibility. */
   providerCompatibility: LunarProviderCompatibility;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Validation issues                                                           */
+/* Validation fields and errors                                               */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Fields that can be requested from the UI when input is incomplete.
+ * Fields the UI can request when the observer input is incomplete.
  */
 export type LunarObserverMissingField =
   | 'heightMeters'
@@ -291,7 +281,7 @@ export type LunarObserverMissingField =
   | 'frameCompatibility';
 
 /**
- * Fields that can contain validation issues.
+ * Input fields that can contain validation issues.
  */
 export type LunarObserverField =
   | 'structure'
@@ -309,7 +299,7 @@ export type LunarObserverField =
   | 'azimuth';
 
 /**
- * Actionable validation error codes.
+ * Machine-readable validation error codes.
  */
 export type LunarObserverErrorCode =
   | 'INVALID_STRUCTURE'
@@ -332,7 +322,7 @@ export type LunarObserverErrorCode =
   | 'AZIMUTH_UNDEFINED_AT_POLE';
 
 /**
- * Field-level validation issue.
+ * Actionable validation issue for one input field.
  */
 export interface LunarObserverValidationIssue {
   field: LunarObserverField;
@@ -341,21 +331,22 @@ export interface LunarObserverValidationIssue {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Validation result                                                           */
+/* Validation result                                                          */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Discriminated runtime validation result.
+ * Result returned by validateLunarObserver(input: unknown).
  *
  * complete:
- * All required observer inputs have passed validation.
- * Provider compatibility may still be unavailable.
+ * Required observer fields are valid. Scientific provider compatibility
+ * can still be unavailable.
  *
  * incomplete:
- * Coordinates are valid, but required observer inputs are missing.
+ * Coordinates are valid, but required observer information is missing.
+ * The result preserves partial coordinates and unavailable frame status.
  *
  * rejected:
- * The input structure or one or more supplied values are invalid.
+ * Input structure, coordinate values, datum, or supplied metadata is invalid.
  */
 export type LunarObserverValidationResult =
   | {
@@ -370,6 +361,7 @@ export type LunarObserverValidationResult =
       errors: LunarObserverValidationIssue[];
       partialCoordinates: ValidatedLunarCoordinates;
       missingFields: LunarObserverMissingField[];
+      frameCompatibility: LunarFrameCompatibility;
     }
   | {
       success: false;
