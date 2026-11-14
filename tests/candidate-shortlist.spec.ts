@@ -178,6 +178,25 @@ test("new candidate edits and confirmed imports invalidate an older clear undo",
   await expect(page.locator("#mission-time")).toHaveValue("2026-11-15T09:10");
 });
 
+test("shortlist comparison retains candidates while an invalid UTC input remains unavailable", async ({ page }) => {
+  await page.goto("/explorer"); await importSites(page, polarSites.slice(0, 2));
+  const before = session(page); if (!before) throw new Error("Missing candidate inputs.");
+  await page.locator("#mission-time").fill("2026-11-14T12:30:01");
+  await expect(page.locator("#mission-time")).toHaveValue("2026-11-14T12:30:01");
+  await expect(page.locator("#mission-time")).toHaveAttribute("aria-invalid", "true");
+  await inspector(page).getByRole("link", { name: "Compare candidates", exact: true }).click();
+  await expect(page).toHaveURL(/\/comparison\?/);
+  await expect(page.getByRole("region", { name: "Comparison sites", exact: true }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.locator("#mission-time")).toHaveValue("");
+  expect(session(page)?.sites).toEqual(before.sites);
+  expect(session(page)?.missionTimeUtc).toBeNull();
+  await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+  await expect(shortlist(page).getByRole("listitem")).toHaveCount(2);
+  await expect(page.locator("#mission-time")).toHaveValue("");
+  expect(session(page)?.sites).toEqual(before.sites);
+  expect(session(page)?.missionTimeUtc).toBeNull();
+});
+
 for (const width of [390, 1440]) {
   test(`shortlist comparison preserves candidates through refresh and map return at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });

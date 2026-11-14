@@ -235,6 +235,48 @@ test("comparison edits survive a Methodology return while calculated results rem
   await expect(timeline(page)).toHaveCount(0);
 });
 
+test("opening comparison from Methodology restores saved inputs and invalid links preserve that backup", async ({ page }) => {
+  await mockMoonTrekTiles(page);
+  const requests = await mockMissionAnalysis(page);
+  const session = { ...emptyExplorerSession(), selected: sites[1]!, sites: sites.slice(0, 2), missionTimeUtc: utc };
+  const shared = new URL(explorerSessionLink(session, "https://moonline.example/explorer"));
+  await page.goto(shared.pathname + shared.search);
+  await expect(page.getByRole("region", { name: "Candidate locations", exact: true }).getByRole("listitem")).toHaveCount(2);
+  const navigation = page.getByRole("navigation", { name: "Main navigation", exact: true });
+  await navigation.getByRole("link", { name: "Methodology", exact: true }).click();
+  await expect(page).toHaveURL(/\/methodology$/);
+  await navigation.getByRole("link", { name: "Site comparison", exact: true }).click();
+  await expect(page).toHaveURL(/\/comparison(?:\?|$)/);
+  await expect(shortlist(page).getByRole("listitem")).toHaveCount(2);
+  await expect(page.locator("#mission-time")).toHaveValue(utc.slice(0, 16));
+  await expect(shortlist(page).getByRole("button", { name: `Select site 2: ${sites[1]!.name}`, exact: true })).toHaveAttribute("aria-pressed", "true");
+  const saved = await page.evaluate(() => sessionStorage.getItem("moonline-exploration"));
+  const backup = readExplorerSession(saved ?? "");
+  expect(backup.status).toBe("ready");
+  if (backup.status !== "ready") throw new Error("Missing saved comparison inputs.");
+  expect(backup.session.sites).toEqual(session.sites);
+  expect(backup.session.missionTimeUtc).toBe(utc);
+  await page.goto("/comparison?session=%7B");
+  await expect(page.getByRole("alert")).toContainText("comparison link was invalid");
+  await expect(shortlist(page).getByRole("listitem")).toHaveCount(0);
+  expect(await page.evaluate(() => sessionStorage.getItem("moonline-exploration"))).toBe(saved);
+  await navigation.getByRole("link", { name: "Methodology", exact: true }).click();
+  await expect(page).toHaveURL(/\/methodology$/);
+  await navigation.getByRole("link", { name: "Site comparison", exact: true }).click();
+  await expect(shortlist(page).getByRole("listitem")).toHaveCount(2);
+  await expect(page.locator("#mission-time")).toHaveValue(utc.slice(0, 16));
+  await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Candidate locations", exact: true }).getByRole("listitem")).toHaveCount(2);
+  await expect(page.locator("#mission-time")).toHaveValue(utc.slice(0, 16));
+  const restored = readExplorerSession(new URL(page.url()).search);
+  expect(restored.status).toBe("ready");
+  if (restored.status !== "ready") throw new Error("Restored comparison lost its Explorer inputs.");
+  expect(restored.session.sites).toEqual(session.sites);
+  expect(restored.session.selected).toEqual(session.selected);
+  expect(restored.session.missionTimeUtc).toBe(utc);
+  expect(requests).toHaveLength(0);
+});
+
 for (const width of [390, 768, 1440]) {
   test(`empty and completed comparison remain usable at ${width}px`, async ({ page }, testInfo) => {
     const errors: string[] = [];
