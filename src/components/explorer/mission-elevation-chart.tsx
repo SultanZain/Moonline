@@ -26,7 +26,7 @@ export function MissionElevationChart({ sites, target, timestamp }: { sites: Ana
         valueFormatter: (value: unknown) => typeof value === "number" ? `${value.toFixed(2)}°` : "Unavailable" },
       xAxis: { type: "time", axisLabel: { color: tokens.getPropertyValue("--content-muted").trim(), fontSize: 10,
         formatter: (value: number) => new Date(value).toISOString().slice(5, 16).replace("T", " ") }, axisLine: { lineStyle: { color: tokens.getPropertyValue("--border").trim() } } },
-      yAxis: { type: "value", min: minimum, max: maximum, name: "°", nameGap: 8, axisLabel: { color: tokens.getPropertyValue("--content-muted").trim(), fontSize: 10 }, splitLine: { lineStyle: { color: tokens.getPropertyValue("--border").trim() } } },
+      yAxis: { type: "value", min: minimum, max: maximum, name: "°", nameGap: 8, axisLabel: { color: tokens.getPropertyValue("--content-muted").trim(), fontSize: 10, formatter: (value: number) => `${Number(value.toFixed(1))}` }, splitLine: { lineStyle: { color: tokens.getPropertyValue("--border").trim() } } },
       series: sites.filter(site => site.analysis[target].status === "ready").flatMap((site, index) => { const result = site.analysis[target]; if (result.status !== "ready") return [];
         return [{ id: `${site.location.latitude}/${site.location.longitude}`, type: "line", name: site.location.name ?? formatMapCoordinates(site.location), showSymbol: false, symbol: ["circle", "triangle", "diamond"][index], connectNulls: false,
           data: result.samples.map(sample => [Date.parse(sample.timestamp), sample.elevationDeg]),

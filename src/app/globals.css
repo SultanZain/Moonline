@@ -172,31 +172,23 @@
   .source-link:hover { color: var(--content-muted); }
   .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 60; transform: translateY(-200%); background: var(--primary); color: var(--primary-foreground); padding: 0.75rem 1rem; border-radius: var(--radius); }
   .skip-link:focus { transform: translateY(0); }
-  /* Comparison = fluid radar + 24px gap + a 320px axis detail on wide screens. */
-  .comparison-overview { display: grid; gap: var(--workspace-gap); align-items: start; }
-  .comparison-preview-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem var(--workspace-pad); border-radius: var(--radius); background: var(--surface-raised); }
-  .comparison-preview-note > div:first-child { max-width: 42rem; }
-  .comparison-figure { margin: 0; }
-  .comparison-radar { height: 360px; width: 100%; }
-  .comparison-chart-loading { display: grid; place-content: center; height: 360px; font-size: 0.875rem; color: var(--content-muted); }
-  .comparison-swatch { display: inline-block; width: 20px; border-top: 2px solid; }
-  .comparison-swatch-a { border-color: var(--comparison-a); }
-  .comparison-swatch-b { border-color: var(--comparison-b); border-top-style: dashed; }
-  .comparison-axis-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
-  .comparison-value { margin-top: 0.5rem; font-size: 2rem; line-height: 2.5rem; font-weight: 500; }
-  .comparison-value[data-state="unavailable"] { font-size: 1rem; }
-  .comparison-value-a { color: var(--comparison-a); }
-  .comparison-value-b { color: var(--comparison-b); }
-  .comparison-metric { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem; border-radius: var(--radius); }
-  .comparison-metric-selected { background: var(--surface-raised); }
-  .comparison-metric-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; min-width: 15rem; text-align: right; padding-right: 0.5rem; }
-  .comparison-metric-values dd { margin-top: 0.25rem; }
-  .comparison-footer { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 1rem; }
-  .comparison-footer p { max-width: 42rem; }
+  .comparison-analysis { display: grid; gap: var(--workspace-gap); align-items: start; }
+  .comparison-site-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 0.75rem; margin-top: 1rem; }
+  .comparison-site-list li { display: flex; align-items: center; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); }
+  .comparison-site-list [aria-pressed="true"] { background: var(--surface-raised); }
+  .comparison-add-site { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 0.75rem; margin-top: 1.25rem; }
+  .comparison-add-site label { display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--content-muted); }
+  .comparison-workspace .mission-timeline { position: static; max-height: none; padding: 0.75rem; }
+  .comparison-workspace .mission-elevation-chart { height: 300px; }
+  .comparison-workspace .mission-comparison-values { display: grid; gap: 0.5rem; }
+  .comparison-workspace .mission-comparison-values > div { justify-content: space-between; font-size: 0.75rem; }
+  .comparison-workspace .mission-comparison-values button { max-width: 45%; }
+  .comparison-empty { min-height: 20rem; display: flex; flex-direction: column; justify-content: center; }
 }
 
 @media (min-width: 768px) {
   .methodology-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comparison-analysis { grid-template-columns: 20rem minmax(0, 1fr); }
 }
 @media (min-width: 1024px) {
   .application-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
@@ -210,9 +202,6 @@
   .application-shell:has(.mission-workspace) .workspace-sidebar .brand-label,
   .application-shell:has(.mission-workspace) .workspace-sidebar .navigation-label { display: none; }
   .application-shell:has(.mission-workspace) .workspace-sidebar nav a { width: 2.75rem; justify-content: center; padding-inline: 0; }
-}
-@media (min-width: 1280px) {
-  .comparison-overview { grid-template-columns: minmax(0, 1fr) 20rem; }
 }
 @media (max-width: 767px) {
   :root { --workspace-pad: 1rem; --workspace-gap: 1rem; }
@@ -242,8 +231,7 @@
   .lunar-map-workspace[data-timeline="expanded"] .map-viewport-controls { bottom: calc(min(55%, 20rem) + 1.25rem); }
   .lunar-map-workspace[data-timeline="expanded"] .map-fit-candidates { display: none; }
   .map-inspector-sheet { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
-  .comparison-radar, .comparison-chart-loading { height: 320px; }
-  .comparison-metric { align-items: stretch; flex-direction: column; gap: 0.25rem; }
-  .comparison-metric-values { min-width: 0; gap: 1rem; padding: 0 0.75rem 0.5rem; text-align: left; }
-  .comparison-value { font-size: 1.5rem; line-height: 2rem; }
+  .comparison-add-site { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comparison-workspace .mission-elevation-chart { height: 220px; }
+  .comparison-workspace .mission-comparison-values > div { flex-wrap: wrap; }
 }

@@ -23,7 +23,7 @@ function Geometry({ label, target, index, atPole }: { label: "Sun" | "Earth"; ta
   </section>;
 }
 
-export function MissionControls({ mission, candidateCount, onTimeline }: { mission: MissionAnalysisControls; candidateCount: number; onTimeline: () => void }) {
+export function MissionControls({ mission, candidateCount, onTimeline, comparisonOnly = false }: { mission: MissionAnalysisControls; candidateCount: number; onTimeline: () => void; comparisonOnly?: boolean }) {
   const analysis = mission.activeSite?.analysis;
   const sample = analysis?.sun.status === "ready" ? analysis.sun.samples[mission.sampleIndex] : analysis?.earth.status === "ready" ? analysis.earth.samples[mission.sampleIndex] : null;
   return <section className="mission-controls" aria-label="Mission analysis">
@@ -39,8 +39,8 @@ export function MissionControls({ mission, candidateCount, onTimeline }: { missi
     <label className="mission-frame-choice"><input type="checkbox" aria-describedby="mission-frame-note" checked={mission.adoptFrame} onChange={event => mission.setAdoptFrame(event.target.checked)} />
       <span>Adopt mean-Earth coordinates <Link href="/methodology#observer-model" title="Map-to-ephemeris frame assumption" aria-label="Coordinate assumption details">?</Link></span></label>
     <p id="mission-frame-note" className="text-xs text-content-muted">Map-frame conversion is unverified.</p>
-    <div className="flex gap-2"><Button className="flex-1" disabled={!mission.ready || mission.loading} onClick={() => void mission.run()}><Activity aria-hidden="true" /> Analyze</Button>
-      {candidateCount >= 2 ? <Button variant="outline" className="flex-1" disabled={!mission.ready || mission.loading} onClick={() => void mission.run(true)}>Compare {candidateCount}</Button> : null}</div>
+    <div className="flex gap-2">{!comparisonOnly ? <Button className="flex-1" disabled={!mission.ready || mission.loading} onClick={() => void mission.run()}><Activity aria-hidden="true" /> Analyze</Button> : null}
+      {candidateCount >= 2 || comparisonOnly ? <Button variant={comparisonOnly ? "default" : "outline"} className="flex-1" disabled={!mission.ready || mission.loading || candidateCount < 2} onClick={() => { if (comparisonOnly) mission.setTimelineOpen(true); void mission.run(true); }}>Compare {candidateCount >= 2 ? candidateCount : "sites"}</Button> : null}</div>
     {mission.loading ? <div className="flex items-center justify-between gap-2"><p role="status" className="text-xs text-content-muted">JPL Horizons · {mission.pending?.index}/{mission.pending?.total}</p><Button variant="ghost" className="px-2 text-xs" onClick={mission.cancel}>Cancel</Button></div> : null}
     {mission.error ? <p role="alert" className="text-xs text-warning">{mission.error}</p> : null}
     {mission.failures.length > 0 && (mission.sites.length > 0 || mission.failures.length > 1) ? <section aria-label="Unavailable sites" className="space-y-2 text-xs text-warning">
