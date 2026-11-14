@@ -1,0 +1,5 @@
+<!-- Match the sidebar Moonline mark and --accent in globals.css. @author Sultan -->
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <title>Moonline</title>
+  <path d="M4 17a10 10 0 1 1 20 0M2 17h24M8 22h12" stroke="#d4e56a" stroke-width="1.5" />
+</svg>
