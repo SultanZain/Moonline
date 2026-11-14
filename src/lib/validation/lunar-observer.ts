@@ -35,21 +35,28 @@ const MAX_PHYSICAL_SURFACE_HEIGHT_METERS = 15000;
 const SUPPORTED_DATUMS: readonly LunarHeightDatum[] = ['reference_sphere', 'terrain_surface'];
 
 /**
- * Normalizes any longitude in degrees into canonical positive-east half-open interval [-180.0, +180.0).
+ * Normalizes supported input longitudes into canonical positive-east half-open interval [-180.0, +180.0).
+ * - Accepted input ranges: Signed [-180.0, +180.0] or Unsigned [0.0, 360.0].
+ * - Inputs outside [-180.0, 360.0] return NaN and are rejected.
+ * - +180.0 normalizes to -180.0 (identical meridian on the sphere).
+ * - 360.0 normalizes to 0.0.
  */
 export function normalizeLongitude180(lonDeg: number): number {
   if (!Number.isFinite(lonDeg)) {
     return NaN;
   }
-  let normalized = ((lonDeg + 180) % 360 + 360) % 360 - 180;
+  // Reject inputs outside supported intervals [-180, 360]
+  if (lonDeg < -180 || lonDeg > 360) {
+    return NaN;
+  }
+  let normalized = lonDeg;
+  if (normalized > 180) {
+    normalized -= 360;
+  }
   if (normalized === 180) {
     normalized = -180;
   }
   return Object.is(normalized, -0) ? 0 : normalized;
-}
-
-function isFiniteNumber(val: unknown): val is number {
-  return typeof val === 'number' && Number.isFinite(val);
 }
 
 export function evaluatePoleStatusAndAzimuth(latitudeDeg: number): {
@@ -146,7 +153,7 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     validLat = rawLat;
   }
 
-  // 3. Validate Longitude
+   // 3. Validate Longitude
   let validLon: number | null = null;
   if (rawLon === undefined || rawLon === null) {
     errors.push({
@@ -161,7 +168,16 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
       message: 'Longitude must be a finite numeric value in degrees.',
     });
   } else {
-    validLon = normalizeLongitude180(rawLon);
+    const normalized = normalizeLongitude180(rawLon);
+    if (Number.isNaN(normalized)) {
+      errors.push({
+        field: 'longitudeDeg',
+        code: 'LONGITUDE_OUT_OF_BOUNDS',
+        message: `Longitude ${rawLon}° is out of supported input intervals ([-180.0, +180.0] or [0.0, 360.0]).`,
+      });
+    } else {
+      validLon = normalized;
+    }
   }
 
   // Reject immediately if coordinate numbers are invalid
