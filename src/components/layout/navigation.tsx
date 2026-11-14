@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Map, Radar } from "lucide-react";
+import { BookOpen, Map, Radar, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { explorerSessionLink, readExplorerSession } from "@/components/explorer/explorer-session";
 
@@ -14,6 +14,7 @@ const destinations = [
   { href: "/explorer", label: "Mission Explorer", icon: Map },
   { href: "/comparison", label: "Site comparison", icon: Radar },
   { href: "/methodology", label: "Methodology", icon: BookOpen },
+  { href: "/about", label: "About Moonline", icon: UsersRound },
 ];
 
 export function Navigation({ onNavigate }: { onNavigate?: () => void }) {

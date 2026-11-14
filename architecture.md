@@ -596,7 +596,7 @@ Extend these models only when an actual feature requires additional fields.
 
 ## 9. Application Pages
 
-The MVP implements site analysis and two/three-site comparison within `/explorer`, using the inspector and mission timeline. `/comparison` is the standalone Site comparison workflow for live results. `/comparison-preview` redirects to that canonical route while retaining its session parameter. `/methodology#observer-model` explains the observer assumptions.
+The MVP implements site analysis and two/three-site comparison within `/explorer`, using the inspector and mission timeline. `/comparison` is the standalone Site comparison workflow for live results. `/comparison-preview` redirects to that canonical route while retaining its session parameter. `/methodology#observer-model` explains the observer assumptions. `/about` lists the contributors, their GitHub profiles and the technology stack. The App Router serves `src/app/icon.svg` as the favicon, matching the sidebar brand mark and accent color.
 
 ### 9.1 Mission Explorer
 
