@@ -165,7 +165,7 @@ Interaction:
 
 The Phase 2 Explorer map fills the available viewport. Desktop navigation becomes a compact rail; smaller screens retain the application menu. Search and coordinate entry sit at the top left, and projection, basemap and overlay controls at the top right. Zoom, reset and fullscreen sit at the lower right; cursor coordinates, lunar scale and projection information sit at the lower left. Controls use opaque neutral surfaces, accessible names, tooltips and touch targets of at least 44px. Keyboard arrows and +/− operate the focused map; Enter selects its center.
 
-Selecting a map location or search result opens a dismissible, nonmodal desktop inspector; mobile uses the existing Radix bottom sheet. The inspector contains coordinates, available nomenclature, an explicit UTC mission-time input and candidate actions. Up to three numbered candidate markers remain on the map. Fullscreen preserves the same map instance, controls and inspector; an expanded view provides a keyboard-accessible fallback when the native Fullscreen API is unavailable. Detailed source limitations, metadata and the published slope legend are disclosed in the layer panel. Tile loading, missing coverage and failures remain distinct, and retries preserve the view. Analysis, timelines and scientific comparison appear only after their calculations are implemented.
+Selecting a map location or search result opens a dismissible, nonmodal desktop inspector; mobile uses the existing Radix bottom sheet. The inspector contains coordinates, available nomenclature, an explicit UTC mission-time input and candidate actions. Up to three numbered candidate markers remain on the map. Fullscreen preserves the same map instance, controls and inspector; an expanded view provides a keyboard-accessible fallback when the native Fullscreen API is unavailable. Detailed source limitations, metadata and the published slope legend are disclosed in the layer panel. Tile loading, missing coverage and failures remain distinct, and retries preserve the view. Analysis requires explicit reference-sphere height and coordinate-model adoption.
 
 The inspector provides candidate import/export and a copyable exploration link. Imports show coordinates and UTC time in a compact preview before replacing existing inputs; cancellation preserves the workspace, and Back restores the previous confirmed import. Copy failures reveal a selectable link. Shared links and reloads restore selection, candidates, time, camera and layers, while invalid shared state opens the default map with a dismissible error. Transfer controls also remain accessible in the mobile fullscreen sheet.
 
@@ -185,6 +185,8 @@ Organize information into:
 
 Each metric must include units and a clear definition. Avoid presenting a number without explaining what it measures.
 
+The implemented inspector offers reference-sphere height with a deliberate “Use 0 m” action, mean-Earth adoption linked to Methodology, UTC window/sample controls, Analyze and Cancel. Sun/Earth results expose elevation, azimuth, sampled sunset/Earthset estimates and unavailable terrain status. The expandable timeline provides keyboard sample navigation, a chart, textual values and visibility windows with open boundaries. Reports retain sources and unavailable results. Loading and errors preserve the user's inputs.
+
 ### 7.3 Site Comparison
 
 Purpose: compare two or three candidate locations fairly.
@@ -195,6 +197,8 @@ Purpose: compare two or three candidate locations fairly.
 - Make differences easy to inspect without implying a universal winner.
 - State when a site has missing or incomplete samples.
 - Do not rank sites using an invented aggregate score.
+
+Explorer compares two or three saved sites under the same UTC range, sample step, reference height and observer assumptions. Sun/Earth series use their semantic colors and distinguish sites with line patterns. Exact sample values and estimated visible hours remain available as text. Missing values stay unknown, per-site failures remain visible, and reports include failed sites alongside available results.
 
 The independent `/comparison-preview` uses a radar as the primary visual, with flat translucent profiles on a circular grid. Site A uses the existing selected-site accent with a solid line and circles; site B uses neutral content ink with a dashed line and diamonds. These site colors do not replace the Sun/Earth colors on scientific series. All preview axes share a labelled 0–100% range, with 25% rings. A prominent notice identifies every value as synthetic. Profile buttons toggle shapes; axis buttons update an adjacent detail panel. The exact values are always available as semantic description lists, without an HTML table. Missing values read “Unavailable” and prevent a closed profile, rather than moving its vertex to zero. Polygon area never represents an overall score. At narrower widths the detail panel stacks and metric labels precede the paired values.
 

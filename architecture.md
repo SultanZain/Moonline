@@ -48,8 +48,8 @@ Use one Next.js application for the frontend and lightweight backend functionali
 | Icons | Lucide React |
 | Lunar map | OpenLayers |
 | Scientific charts | Apache ECharts |
-| Validation | Zod |
-| Date utilities | date-fns |
+| Validation | Typed runtime guards |
+| Date utilities | Native Date with explicit UTC/calendar validation |
 | Hosting | Vercel |
 | Package manager | pnpm |
 
@@ -238,7 +238,7 @@ Create files when actual implementation requires them.
 - `lib/astronomy/`: Astronomical calculations and coordinate handling.
 - `lib/science/`: Visibility analysis and scientific processing.
 - `lib/dates/`: Time and date utilities.
-- `lib/validation/`: Zod schemas.
+- `lib/validation/`: typed runtime input guards.
 - `config/`: Application configuration and static configuration.
 
 Pages should primarily compose components and coordinate page-level state. Do not put large scientific calculations or provider integrations inside page components.
@@ -281,6 +281,8 @@ Before implementing calculations, verify:
 Do not silently substitute a different coordinate system or calculation method.
 
 Provider-specific parameters should be isolated inside the Horizons integration.
+
+The implemented mission client requests lunar surface observer tables with `CENTER='coord@301'`, `COORD_TYPE='GEODETIC'`, `QUANTITIES='4'` and `APPARENT='AIRLESS'`. Longitude and latitude are in degrees; reference-sphere height is converted from metres to kilometres. It validates the returned Moon center, target, mean-Earth frame, 1,737.4 km spherical figure and scheduled UTC rows before exposing angles. Returned ephemeris/API metadata and the query/retrieval time are preserved. Future UTC uses Horizons' latest known leap-second correction. The user's explicit coordinate adoption does not establish a Moon Trek frame transformation.
 
 ### 5.2 NASA Moon Trek
 
@@ -417,11 +419,11 @@ A site must never be described as safe or mission-ready based only on the calcul
 
 Use Next.js Route Handlers for server-side data integrations.
 
-Keep API contracts typed and validate external inputs with Zod.
+Keep API contracts typed and validate external inputs at runtime.
 
-Proposed endpoints:
+The implemented routes are `GET /api/lunar-locations` for NASA name search and `POST /api/analysis` for mission geometry. The separate catalogue, ephemeris and comparison routes below remain proposals; current comparison orchestrates one analysis request per candidate.
 
-### `GET /api/sites`
+### `GET /api/sites` (proposal)
 
 Returns predefined candidate sites.
 
@@ -442,7 +444,7 @@ Example:
 
 The example is illustrative. Actual site coordinates must be researched and verified before inclusion.
 
-### `POST /api/ephemeris`
+### `POST /api/ephemeris` (proposal)
 
 Requests astronomical position data for a lunar observer.
 
@@ -465,23 +467,29 @@ The request schema must explicitly define coordinate conventions and time interp
 
 ### `POST /api/analysis`
 
-Processes ephemeris data into visibility results and analysis time series.
+Retrieves Sun/Earth observer tables from the fixed JPL Horizons endpoint, validates their metadata and samples, and derives ideal tangent-horizon visibility. Provider parameters remain in `src/lib/api/lunar-horizons.ts`; the route handles bounded requests and stable HTTP envelopes.
 
-Example request:
+Example input under the explicitly adopted mean-Earth observer model:
 
 ```json
 {
   "observer": {
-    "latitude": -89.9,
-    "longitude": 0
+    "latitude": -85,
+    "longitude": 20,
+    "heightMeters": 0,
+    "coordinateBasis": "adopted_mean_earth"
   },
-  "startTime": "2026-11-13T00:00:00Z",
-  "endTime": "2026-11-14T00:00:00Z",
-  "stepMinutes": 10
+  "startUtc": "2026-11-14T00:00:00.000Z",
+  "endUtc": "2026-11-15T00:00:00.000Z",
+  "stepMinutes": 60
 }
 ```
 
-### `POST /api/comparison`
+`validateMissionInput` accepts finite latitude/positive-east longitude, an explicit height within the application's ±20,000 m bound, and minute-precision UTC within 1972–2099. The interval must be positive, at most 31 days, aligned with a supported 10/30/60/180/360-minute step, and contain at most 1,500 samples. Requests are limited to 8,192 bytes. Zero height is deliberate reference-sphere input; missing height is invalid. The map-to-ephemeris transformation is not established by this adoption.
+
+Successful responses contain `{ status: "ready", analysis }`, including per-target availability, source metadata and sampled visibility. Input errors return actionable field issues; oversized requests and provider failures have stable error responses. Results are served without caching. A failed Sun or Earth target remains explicit while the successful target is retained.
+
+### `POST /api/comparison` (proposal)
 
 Compares multiple sites using identical analysis settings.
 
@@ -518,7 +526,7 @@ Example request:
 - Do not expose provider credentials or secrets.
 - Do not return fabricated fallback data.
 
-The exact response schemas should be defined alongside their implementations using TypeScript and Zod.
+The current analysis schema is defined by `MissionInput` and `MissionAnalysis` in `src/types/mission-analysis.ts`, with runtime request and response validation. The proposal examples above are design references rather than accepted payloads for the implemented route.
 
 ---
 
@@ -528,7 +536,7 @@ Use explicit types for scientific data.
 
 Avoid loosely structured objects and untyped provider responses.
 
-The following are conceptual shapes, not mandatory database schemas.
+The following are conceptual shapes, not mandatory database schemas. The implemented mission contract uses `MissionObserver`, `MissionInput`, `PositionSample`, `TargetAnalysis` and `MissionAnalysis` from `src/types/mission-analysis.ts`. It preserves missing angles, partial target errors, provenance, interpolated events and visibility windows with open boundaries.
 
 ### Observer location
 
@@ -587,6 +595,8 @@ Extend these models only when an actual feature requires additional fields.
 ---
 
 ## 9. Application Pages
+
+The MVP implements site analysis and two/three-site comparison within `/explorer`, using the inspector and mission timeline. `/methodology#observer-model` explains the observer assumptions; `/comparison-preview` remains a separate synthetic UI demonstration.
 
 ### 9.1 Mission Explorer
 
@@ -671,7 +681,7 @@ The Phase 2 Explorer consumes nine NASA WMTS sources through `src/config/moon-tr
 
 Tiles are fetched directly with verified CORS, a 15-second per-request deadline, six concurrent loads, image/HTTP failure handling, and cancellation on source replacement or unmount. Error status follows failures in the current viewport; retry retains selection and the view. An enabled higher-resolution overlay can raise the view's zoom limit without issuing requests beyond another source's published maximum. Only the NAC layers with a documented zero nodata value receive the black-pixel transparency mask; zero shot counts are not treated as missing elevations. Blank imagery is distinguished from a request failure and does not establish absence of coverage at every longitude.
 
-Map-coordinate conversions and validation live in the Explorer feature. Native projected nomenclature coordinates from NASA supply independent forward/inverse reference cases in `tests/fixtures/nasa-map-coordinate-references.json`. The map scale corrects for the projection and reports horizontal reference-sphere distance at the view center, rather than terrain-following distance. These map helpers do not define observer height, altitude datum, ephemeris frame or local astronomical axes; those remain in Rameen's scientific contract.
+Map-coordinate conversions and validation live in the Explorer feature. Native projected nomenclature coordinates from NASA supply independent forward/inverse reference cases in `tests/fixtures/nasa-map-coordinate-references.json`. The map scale corrects for the projection and reports horizontal reference-sphere distance at the view center, rather than terrain-following distance. These helpers do not define an ephemeris frame or observer height. Mission analysis requires explicit reference-sphere height and user adoption of the numeric coordinates as mean-Earth geodetic inputs; a verified map-to-observer transformation remains separate.
 
 `/api/lunar-locations` queries a fixed NASA nomenclature service, validates its coordinate system and payload, and returns at most eight map locations. The client debounces name searches and cancels stale responses; manually entered coordinates work independently of search availability. Selection opens a contextual inspector with an explicit UTC mission-time input and up to three candidate sites. The JSON export identifies map coordinates, selection, view settings and uncalculated analysis; it is not a mission report.
 
@@ -704,7 +714,9 @@ Chart requirements:
 
 Charts must use actual calculated data. Never populate them with illustrative values presented as scientific results.
 
-Sultan authorized an independent UI preview at `/comparison-preview` before Phase 5 integration. It uses source-owned, explicitly synthetic fixtures in `components/comparison/preview-data.ts`, a modular Apache ECharts SVG radar loaded only on that route, and a textual comparison without an HTML table. This preview does not define the scientific contract. All five proposed axes use a shared 0–100% display range and scheduled-sample denominator; missing axes omit the entire profile shape, while known values remain inspectable. No site coordinates, dates, ephemeris, terrain, ranking or operational recommendation are simulated. The real Phase 5 comparison still depends on Rameen's verified implementation and metadata.
+The mission timeline loads its modular ECharts SVG elevation chart when needed. Sun and Earth retain their semantic colors; candidate series use different line patterns. UTC sample controls, angle values, visibility windows and reports provide textual access. Missing elevations create gaps, and missing samples make total visible hours unknown. Crossings are linearly interpolated between samples; additional crossings between samples may be missed. Open window boundaries mark crossings that were not observed at a range boundary or missing-data gap.
+
+Sultan authorized an independent UI preview at `/comparison-preview` before Phase 5 integration. It uses source-owned, explicitly synthetic fixtures in `components/comparison/preview-data.ts`, a modular Apache ECharts SVG radar loaded only on that route, and a textual comparison without an HTML table. This preview does not define the scientific contract. All five proposed axes use a shared 0–100% display range and scheduled-sample denominator; missing axes omit the entire profile shape, while known values remain inspectable. No site coordinates, dates, ephemeris, terrain, ranking or operational recommendation are simulated. Live scientific comparison runs in Explorer; the radar preview remains illustrative.
 
 ---
 
@@ -717,6 +729,8 @@ Use URL parameters for shareable or reload-persistent analysis settings where ap
 Explorer stores its map selection, up to three candidates, entered UTC mission time and camera/layer settings in a versioned `session` query parameter. Native history updates preserve Next.js history metadata. The engine captures settled camera positions, and URL writes are debounced by 500 ms so panning and opacity changes do not repeatedly update history. Navigation and confirmed imports flush pending state first. Continuous interaction replaces the current entry; a confirmed candidate import creates one history entry so Back can restore the previous exploration. Reloads and history navigation validate the input before restoring sources, camera and markers together. Fullscreen, open popups and raster load/error status are transient and are not serialized.
 
 Shared state is bounded to 8,192 decoded characters. Candidate files are read locally, limited to 16,384 bytes and previewed before replacement; older Moonline candidate exports remain supported. The feature validates finite map coordinates, supported map conventions, unique sites, bounded labels, explicit minute-precision UTC/calendar values, known overlays, opacity and each source's published zoom limit. Polar camera coordinates are bounded to ±1 billion metres as an application input limit, without applying a coverage mask. Missing time remains null. Imported labels are user input, not newly verified NASA nomenclature, and no observer height/frame or scientific result is inferred.
+
+Mission settings and returned results are transient rather than serialized into exploration links or candidate files. Analysis uses explicit height and coordinate adoption plus a 1/7/14/30-day UI window and supported sample step. Comparisons apply identical settings to each candidate, retain per-site failures and export them with available results. Changing analysis inputs invalidates their displayed results; requests can be cancelled and retried.
 
 Examples:
 
@@ -871,6 +885,8 @@ Do not consider plausible-looking charts sufficient validation.
 
 Scientific calculations should be checked against trusted reference data or independently verified calculations.
 
+The mission science suite archives actual NASA/JPL Sun and Earth responses in `tests/science/fixtures`, including their URLs and retrieval times. Reference tests check returned angles, observer configuration, frame/figure metadata and UTC sampling. Explicitly synthetic horizon samples isolate interpolation, missing-data gaps and open boundaries. Browser fixtures exercise transport and user-flow behavior; the runtime application never substitutes them for a failed provider.
+
 ### Build verification
 
 Before considering implementation complete, run the available project checks:
@@ -896,7 +912,7 @@ Build the product in the following order.
 - Establish the application shell.
 - Configure basic navigation and design tokens.
 
-The foundation uses this directory as the single Next.js application root. `/` redirects to `/explorer`; `/methodology` documents the current implementation scope and planned scientific requirements. `/comparison-preview` is a clearly labelled synthetic UI demonstration. Only implemented destinations appear in navigation. Explorer supports NASA imagery and map-location selection; scientific observer validation, ephemeris integration, visibility calculations and scientific site comparison remain unimplemented.
+The application uses this directory as the single Next.js root. `/` redirects to `/explorer`; `/methodology` documents its sources, adopted observer model and limitations. Explorer integrates NASA imagery, map/manual selection, live Sun/Earth positions, sampled tangent-horizon visibility, two/three-site comparison and Markdown reports. `/comparison-preview` remains a clearly labelled synthetic UI demonstration. A verified map-frame conversion, terrain obstruction and operational suitability remain outside this implementation.
 
 `pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog. OpenLayers is loaded only by Explorer; no unused UI primitives or later-phase libraries are installed.
 
@@ -939,6 +955,7 @@ Next.js automatic agent-file generation is disabled with `agentRules: false` so 
 - Validate accessibility.
 - Test the production build.
 - Prepare the demo workflow.
+- Export traceable reports, including unavailable targets and failed sites.
 
 ### Optional extensions
 
@@ -948,7 +965,6 @@ Only after the core workflow works:
 - Additional lunar scientific layers.
 - Advanced SPICE integration.
 - 3D lunar visualization.
-- Exportable mission analysis reports.
 
 ---
 
