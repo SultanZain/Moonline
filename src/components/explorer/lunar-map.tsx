@@ -22,6 +22,9 @@ import {
 } from "@/config/moon-trek";
 import type { LunarMapHandle, LunarMapSnapshot, LunarMapState } from "./lunar-map-engine";
 import { useLunarSearch, type LunarSearchResult } from "@/hooks/use-lunar-search";
+import { useMissionAnalysis } from "@/hooks/use-mission-analysis";
+import { MissionControls } from "./mission-controls";
+import { MissionTimeline } from "./mission-timeline";
 
 type MapDisplay = "embedded" | "expanded" | "fullscreen";
 type MapPopup = "coordinates" | "layers" | null;
@@ -71,6 +74,7 @@ export function LunarMap() {
   const [longitude, setLongitude] = useState("");
   const [coordinateError, setCoordinateError] = useState<string | null>(null);
   const { state: searchState, search, reset: resetSearch } = useLunarSearch();
+  const mission = useMissionAnalysis(selected, candidates, missionTime);
   const initialized = snapshot !== null;
   const expanded = display !== "embedded";
   const mode = snapshot?.mode ?? "global";
@@ -314,6 +318,7 @@ export function LunarMap() {
 
   return (
     <section ref={setRootElement} className={`lunar-map-workspace${expanded ? " lunar-map-expanded" : ""}`} data-candidates={candidates.length > 1 ? "multiple" : undefined}
+      data-inspector={inspectorOpen ? "open" : undefined} data-timeline={mission.sites.length > 0 ? mission.timelineOpen ? "expanded" : "collapsed" : undefined}
       role={expanded ? "dialog" : undefined} aria-modal={expanded ? true : undefined} aria-labelledby="lunar-map-heading">
       <h2 id="lunar-map-heading" className="sr-only">Lunar exploration</h2>
       <div ref={target} className="lunar-map-canvas" tabIndex={0} role="region" aria-label="Lunar imagery map" aria-describedby="map-keyboard-help"
@@ -434,6 +439,10 @@ export function LunarMap() {
 
       <ContextSheet open={inspectorOpen} onOpenChange={setInspectorOpen} container={rootElement} onReturnFocus={() => inspectorButton.current?.focus()}>
         <SiteContext location={selected} candidates={candidates} missionTime={missionTime} clearedCount={clearedCandidates?.length ?? 0} onFit={fitCandidates}
+          analysisControls={<MissionControls mission={mission} candidateCount={candidates.length} onTimeline={() => {
+            setInspectorOpen(false); setPopup(null); mission.setTimelineOpen(true);
+            requestAnimationFrame(() => rootElement?.querySelector<HTMLInputElement>('input[aria-label="Analysis time"]')?.focus());
+          }} />}
           onTimeChange={setMissionTime} onNavigate={navigate} onAdd={() => {
             if (selected && candidates.length < 3 && !candidates.some(site => site.latitude === selected.latitude && site.longitude === selected.longitude)) {
               setClearedCandidates(null); setCandidates(sites => [...sites, selected]);
@@ -463,6 +472,7 @@ export function LunarMap() {
         {candidates.length > 1 ? <Button variant="ghost" size="icon" className="map-fit-candidates" title="Fit candidates" aria-label="Fit candidates" disabled={!initialized} onClick={fitCandidates}><Scan aria-hidden="true" /></Button> : null}
       </div>
       <p className="map-attribution"><a href="https://trek.nasa.gov/moon/" target="_blank" rel="noreferrer">NASA · LROC · LOLA</a><span aria-label="Map zoom">z{snapshot?.zoom ?? "—"} / {snapshot?.maxZoom ?? "—"}</span></p>
+      <MissionTimeline mission={mission} onLocate={navigate} />
     </section>
   );
 }

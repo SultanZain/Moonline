@@ -25,10 +25,11 @@ type SiteContextProps = {
   onClear: () => void;
   onUndo: () => void;
   clearedCount: number;
+  analysisControls: ReactNode;
   children: ReactNode;
 };
 
-export function SiteContext({ location, candidates, missionTime, onTimeChange, onNavigate, onAdd, onRemove, onFit, onClear, onUndo, clearedCount, children }: SiteContextProps) {
+export function SiteContext({ location, candidates, missionTime, onTimeChange, onNavigate, onAdd, onRemove, onFit, onClear, onUndo, clearedCount, analysisControls, children }: SiteContextProps) {
   const context = useRef<HTMLDivElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
   const undoButton = useRef<HTMLButtonElement>(null);
@@ -87,10 +88,10 @@ export function SiteContext({ location, candidates, missionTime, onTimeChange, o
               aria-describedby={timeInvalid ? "mission-time-error" : undefined} onChange={event => onTimeChange(event.target.value)} />
             {timeInvalid ? <p id="mission-time-error" role="alert" className="text-xs text-warning">Enter a valid UTC date and time, to the minute.</p> : null}
           </div>
+          {analysisControls}
           {!saved && candidates.length < 3 ? <Button ref={addButton} onClick={() => {
             focusAfterChange.current = () => candidateButtons.current.get(`${location.latitude}/${location.longitude}`)?.focus(); onAdd();
           }}><Plus aria-hidden="true" /> Add candidate</Button> : null}
-          <p className="text-xs leading-5 text-content-muted">Analysis not connected.</p>
         </>
       ) : <p className="text-sm leading-6 text-content-muted">Select a location.</p>}
 
