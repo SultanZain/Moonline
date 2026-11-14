@@ -110,9 +110,7 @@ export type LunarFrameCompatibility =
  * terrain_surface:
  * Height above a documented local terrain surface.
  */
-export type LunarHeightDatum =
-  | 'reference_sphere'
-  | 'terrain_surface';
+export type LunarHeightDatum = 'reference_sphere';
 
 /**
  * Meaning of a supplied observer height.
@@ -134,8 +132,7 @@ export type LunarHeightDatum =
 export type LunarHeightInterpretation =
   | 'reference_surface_zero'
   | 'reference_surface_offset'
-  | 'measured_terrain_elevation'
-  | 'height_above_terrain';
+  | 'measured_terrain_elevation';
 
 /**
  * Validated observer height input.
@@ -278,6 +275,7 @@ export type LunarObserverMissingField =
   | 'heightMeters'
   | 'heightDatum'
   | 'heightInterpretation'
+  | 'heightSource'
   | 'frameCompatibility';
 
 /**
