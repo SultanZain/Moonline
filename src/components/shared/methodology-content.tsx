@@ -15,8 +15,8 @@ export function MethodologyContent() {
       </header>
       <section className="scope-note" aria-labelledby="implementation-heading">
         <h2 id="implementation-heading">Current implementation</h2>
-        <p className="mt-2 text-sm leading-6 text-content-muted">Explorer connects NASA imagery with live Sun/Earth geometry, visibility timelines and comparison for up to three sites. Results use the observer assumption below. Reports include inputs, sources, sample values, visibility windows and unavailable results. The separate comparison preview uses labelled synthetic fixtures.</p>
-        <Link href="/comparison-preview" className="source-link mt-3">Explore the illustrative comparison <ArrowUpRight aria-hidden="true" /></Link>
+        <p className="mt-2 text-sm leading-6 text-content-muted">Explorer and Site comparison use live Sun/Earth geometry for up to three sites. Enter coordinates or bring Explorer candidates, choose common settings, inspect visibility timelines and download reports with inputs, sources and unavailable results.</p>
+        <Link href="/comparison-preview" className="source-link mt-3">Compare sites <ArrowUpRight aria-hidden="true" /></Link>
       </section>
       <div className="methodology-grid">
         <section className="workspace-panel" aria-labelledby="sources-heading">

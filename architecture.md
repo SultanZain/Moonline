@@ -596,7 +596,7 @@ Extend these models only when an actual feature requires additional fields.
 
 ## 9. Application Pages
 
-The MVP implements site analysis and two/three-site comparison within `/explorer`, using the inspector and mission timeline. `/methodology#observer-model` explains the observer assumptions; `/comparison-preview` remains a separate synthetic UI demonstration.
+The MVP implements site analysis and two/three-site comparison within `/explorer`, using the inspector and mission timeline. `/comparison-preview` is the standalone Site comparison workflow for live results. `/methodology#observer-model` explains the observer assumptions.
 
 ### 9.1 Mission Explorer
 
@@ -637,6 +637,8 @@ Responsibilities:
 - Clearly distinguish missing or unavailable results.
 
 Do not introduce an arbitrary overall site score.
+
+Site comparison accepts up to three manually entered coordinate pairs or the shortlist transferred from Explorer. It reuses the mission analysis hook, controls and timeline to request `/api/analysis` for each candidate under common height, UTC window and sample settings. Results expose Sun/Earth angles, visibility windows, provenance and per-site failures; Markdown reports retain the same inputs and results. Manual entry supports comparison independently of map imagery.
 
 ### 9.4 Methodology
 
@@ -716,7 +718,7 @@ Charts must use actual calculated data. Never populate them with illustrative va
 
 The mission timeline loads its modular ECharts SVG elevation chart when needed. Sun and Earth retain their semantic colors; candidate series use different line patterns. UTC sample controls, angle values, visibility windows and reports provide textual access. Missing elevations create gaps, and missing samples make total visible hours unknown. Crossings are linearly interpolated between samples; additional crossings between samples may be missed. Open window boundaries mark crossings that were not observed at a range boundary or missing-data gap.
 
-Sultan authorized an independent UI preview at `/comparison-preview` before Phase 5 integration. It uses source-owned, explicitly synthetic fixtures in `components/comparison/preview-data.ts`, a modular Apache ECharts SVG radar loaded only on that route, and a textual comparison without an HTML table. This preview does not define the scientific contract. All five proposed axes use a shared 0–100% display range and scheduled-sample denominator; missing axes omit the entire profile shape, while known values remain inspectable. No site coordinates, dates, ephemeris, terrain, ranking or operational recommendation are simulated. Live scientific comparison runs in Explorer; the radar preview remains illustrative.
+Explorer and standalone Site comparison use the same live mission timeline and elevation chart. Candidate comparisons retain shared inputs, missing-data gaps and textual values. No aggregate score is calculated.
 
 ---
 
@@ -729,6 +731,8 @@ Use URL parameters for shareable or reload-persistent analysis settings where ap
 Explorer stores its map selection, up to three candidates, entered UTC mission time and camera/layer settings in a versioned `session` query parameter. Native history updates preserve Next.js history metadata. The engine captures settled camera positions, and URL writes are debounced by 500 ms so panning and opacity changes do not repeatedly update history. Navigation and confirmed imports flush pending state first. Continuous interaction replaces the current entry; a confirmed candidate import creates one history entry so Back can restore the previous exploration. Reloads and history navigation validate the input before restoring sources, camera and markers together. Fullscreen, open popups and raster load/error status are transient and are not serialized.
 
 Shared state is bounded to 8,192 decoded characters. Candidate files are read locally, limited to 16,384 bytes and previewed before replacement; older Moonline candidate exports remain supported. The feature validates finite map coordinates, supported map conventions, unique sites, bounded labels, explicit minute-precision UTC/calendar values, known overlays, opacity and each source's published zoom limit. Polar camera coordinates are bounded to ±1 billion metres as an application input limit, without applying a coverage mask. Missing time remains null. Imported labels are user input, not newly verified NASA nomenclature, and no observer height/frame or scientific result is inferred.
+
+Site comparison uses the same validated `session` URL format for its shortlist and UTC start time. Links between it and Explorer carry that state, preserving the map settings when returning to Explorer. Manual candidate additions and removals update the comparison session.
 
 Mission settings and returned results are transient rather than serialized into exploration links or candidate files. Analysis uses explicit height and coordinate adoption plus a 1/7/14/30-day UI window and supported sample step. Comparisons apply identical settings to each candidate, retain per-site failures and export them with available results. Changing analysis inputs invalidates their displayed results; requests can be cancelled and retried.
 
@@ -912,7 +916,7 @@ Build the product in the following order.
 - Establish the application shell.
 - Configure basic navigation and design tokens.
 
-The application uses this directory as the single Next.js root. `/` redirects to `/explorer`; `/methodology` documents its sources, adopted observer model and limitations. Explorer integrates NASA imagery, map/manual selection, live Sun/Earth positions, sampled tangent-horizon visibility, two/three-site comparison and Markdown reports. `/comparison-preview` remains a clearly labelled synthetic UI demonstration. A verified map-frame conversion, terrain obstruction and operational suitability remain outside this implementation.
+The application uses this directory as the single Next.js root. `/` redirects to `/explorer`; `/methodology` documents its sources, adopted observer model and limitations. Explorer integrates NASA imagery, map/manual selection, live Sun/Earth positions, sampled tangent-horizon visibility, two/three-site comparison and Markdown reports. `/comparison-preview` offers live Site comparison with manual coordinate entry and Explorer shortlist transfer. A verified map-frame conversion, terrain obstruction and operational suitability remain outside this implementation.
 
 `pnpm verify` runs type checking, lint, a production build, and Playwright browser tests against the production server. DM Sans is hosted locally through `@fontsource/dm-sans`. Source-owned Button and Sheet components use Radix Slot and Dialog. OpenLayers is loaded only by Explorer; no unused UI primitives or later-phase libraries are installed.
 

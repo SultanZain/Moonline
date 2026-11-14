@@ -2,7 +2,7 @@
 
 A lunar exploration and geometric visibility planning aid. This directory is the single application root.
 
-Explorer combines NASA Moon Trek imagery with live NASA JPL Horizons Sun/Earth geometry, sampled visibility, comparison and Markdown reports.
+Explorer combines NASA Moon Trek imagery with live NASA JPL Horizons Sun/Earth geometry, sampled visibility and Markdown reports. Site comparison provides the same analysis for two or three candidates without requiring the map.
 
 Explorer occupies the available screen with global and south-polar WAC imagery, LOLA relief, and five independent polar overlays: terrain detail, Malapert NAC hillshade and imagery, slope classes, and shot counts. Search NASA lunar names or enter coordinates, select a location on the map, save up to three candidates, and export their coordinates with an entered UTC mission time. Floating controls provide layers, opacity, zoom, reset and fullscreen. Each raster keeps its published tile matrix and zoom limit, including valid columns beyond the old square bounds.
 
@@ -12,7 +12,9 @@ Frame the saved candidates together with Show all or the map fit control. Select
 
 To analyze a site, enter a UTC start time, choose a 1/7/14/30-day window and a 10/30/60/180/360-minute sample step, supply a reference-sphere height, and explicitly adopt the mean-Earth coordinate assumption. “Use 0 m” deliberately selects the mathematical reference surface; missing height is never zero. Analyze one site or compare two or three saved candidates under common settings. The timeline provides Sun/Earth charts, sample values and visibility windows; reports retain inputs, provenance, crossings, windows and failed-site results.
 
-Map navigation uses conversions checked against NASA's native polar nomenclature coordinates. Analysis deliberately treats the supplied numbers as Horizons mean-Earth geodetic coordinates; a map-to-ephemeris frame transformation remains unverified. Heights refer to the 1,737,400 m sphere. Visibility means an airless target center above its ideal tangent horizon. Crossings are interpolated between samples, open boundaries remain marked, and missing samples make total visibility unknown. Terrain obstruction, horizon dip, target-disc effects, usable power, communications links and landing safety are excluded. Fixed hillshade does not show mission-time sunlight. The separate radar comparison preview remains clearly labelled synthetic.
+Open Site comparison at `/comparison-preview` to enter up to three sites by latitude and positive-east longitude, or bring saved candidates and UTC time from Explorer. Use common height, UTC window and sample settings to request live Sun/Earth results. Inspect charts, exact sample values and visibility windows, then download a Markdown report. Navigation between Explorer and Site comparison preserves the shortlist and UTC time.
+
+Map navigation uses conversions checked against NASA's native polar nomenclature coordinates. Analysis deliberately treats the supplied numbers as Horizons mean-Earth geodetic coordinates; a map-to-ephemeris frame transformation remains unverified. Heights refer to the 1,737,400 m sphere. Visibility means an airless target center above its ideal tangent horizon. Crossings are interpolated between samples, open boundaries remain marked, and missing samples make total visibility unknown. Terrain obstruction, horizon dip, target-disc effects, usable power, communications links and landing safety are excluded. Fixed hillshade does not show mission-time sunlight.
 
 The API accepts explicit minute-precision UTC inputs within 1972–2099, a window up to 31 days and at most 1,500 samples. Choose a compatible window/step combination. Future UTC uses Horizons' latest known leap-second correction. Source research for Moon Trek: Rameen; application integration: Sultan.
 
