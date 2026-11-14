@@ -257,7 +257,7 @@ test("opening comparison from Methodology restores saved inputs and invalid link
   expect(backup.session.sites).toEqual(session.sites);
   expect(backup.session.missionTimeUtc).toBe(utc);
   await page.goto("/comparison?session=%7B");
-  await expect(page.getByRole("alert")).toContainText("comparison link was invalid");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("comparison link was invalid");
   await expect(shortlist(page).getByRole("listitem")).toHaveCount(0);
   expect(await page.evaluate(() => sessionStorage.getItem("moonline-exploration"))).toBe(saved);
   await navigation.getByRole("link", { name: "Methodology", exact: true }).click();
