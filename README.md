@@ -47,6 +47,7 @@ Science reference fixtures in `tests/science/fixtures` archive actual Sun/Earth 
 
 ## Project guidance
 
+- [Video director’s guide](docs/demo/README.md): exact clicks, narration, real screenshots, a 28-second submission cut and a longer practice walkthrough. Open [the illustrated HTML version](docs/demo/director-guide.html) locally in a browser.
 - [AGENTS.md](AGENTS.md): operating rules and verification discipline.
 - [architecture.md](architecture.md): stack, boundaries, scientific data flow, and implementation order.
 - [design.md](design.md): tokens, interactions, responsive behavior, and accessibility.
