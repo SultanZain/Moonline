@@ -2,7 +2,9 @@
  * @file tests/science/lunar-observer.spec.ts
  * @description Comprehensive scientific test suite for MOONLINE Lunar Observer Contract.
  *
- * Directly satisfies Sultan's review criteria:
+ * Fully type-checked for tsc --noEmit and @playwright/test.
+ *
+ * Covers:
  * 1. Proves unknown/missing height is NEVER treated as successful observer.
  * 2. Tests full datum validation (supported, unsupported, and interpretation mismatches).
  * 3. Tests exact-pole azimuth singularity policy (-90° and +90°).
@@ -43,8 +45,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
 
       const result = validateLunarObserver(sultanProbe);
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.status).toBe('incomplete');
+      expect(result.status).toBe('incomplete');
+
+      if (result.status === 'incomplete') {
         expect(result.missingFields).toContain('heightMeters');
         expect(result.missingFields).toContain('heightDatum');
         expect(result.missingFields).toContain('heightInterpretation');
@@ -52,6 +55,7 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         // Partial coordinates preserved for UI prompt
         expect(result.partialCoordinates.latitudeDeg).toBe(-85);
         expect(result.partialCoordinates.longitudeDeg).toBe(20);
+        expect(result.partialCoordinates.coordinateSystem).toBe('MOON_TREK_MAP');
 
         // Frame compatibility remains honestly unavailable
         expect(result.frameCompatibility.status).toBe('unavailable');
@@ -68,8 +72,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
 
       const result = validateLunarObserver(coordsOnly);
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.status).toBe('incomplete');
+      expect(result.status).toBe('incomplete');
+
+      if (result.status === 'incomplete') {
         expect(result.missingFields).toEqual([
           'heightMeters',
           'heightDatum',
@@ -87,8 +92,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
 
       const result = validateLunarObserver(heightWithoutDatum);
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.status).toBe('incomplete');
+      expect(result.status).toBe('incomplete');
+
+      if (result.status === 'incomplete') {
         expect(result.missingFields).toContain('heightDatum');
         expect(result.missingFields).toContain('heightInterpretation');
       }
@@ -108,6 +114,7 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(sphereValid.success).toBe(true);
+      expect(sphereValid.status).toBe('complete');
 
       const terrainValid = validateLunarObserver({
         latitudeDeg: -85,
@@ -117,6 +124,7 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'measured_terrain_elevation',
       });
       expect(terrainValid.success).toBe(true);
+      expect(terrainValid.status).toBe('complete');
     });
 
     test('rejects unsupported datums like "terrain-relative" or "wgs84"', () => {
@@ -130,8 +138,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
           heightInterpretation: 'measured_terrain_elevation',
         });
         expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.status).toBe('rejected');
+        expect(result.status).toBe('rejected');
+        if (result.status === 'rejected') {
           expect(result.errors.some(e => e.code === 'UNSUPPORTED_DATUM')).toBe(true);
         }
       }
@@ -147,8 +155,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'measured_terrain_elevation',
       });
       expect(mismatch1.success).toBe(false);
-      if (!mismatch1.success) {
-        expect(mismatch1.status).toBe('rejected');
+      expect(mismatch1.status).toBe('rejected');
+      if (mismatch1.status === 'rejected') {
         expect(mismatch1.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
       }
 
@@ -161,8 +169,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(mismatch2.success).toBe(false);
-      if (!mismatch2.success) {
-        expect(mismatch2.status).toBe('rejected');
+      expect(mismatch2.status).toBe('rejected');
+      if (mismatch2.status === 'rejected') {
         expect(mismatch2.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
       }
     });
@@ -176,7 +184,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(result.success).toBe(true);
-      if (result.success) {
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
         expect(result.observer.height.heightMeters).toBe(0);
         expect(result.observer.height.heightInterpretation).toBe('reference_surface_zero');
         expect(result.warnings.some(w => w.includes('mathematical datum'))).toBe(true);
@@ -205,8 +214,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
           heightInterpretation: 'reference_surface_zero',
         });
         expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.status).toBe('rejected');
+        expect(result.status).toBe('rejected');
+        if (result.status === 'rejected') {
           expect(result.errors.some(e => e.code === 'NON_FINITE_NUMBER')).toBe(true);
         }
       }
@@ -229,9 +238,7 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
           heightInterpretation: 'reference_surface_zero',
         });
         expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.status).toBe('rejected');
-        }
+        expect(result.status).toBe('rejected');
       }
     });
 
@@ -240,8 +247,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       const plain = [-85, 20];
       const res1 = validateLunarObserver(plain);
       expect(res1.success).toBe(false);
-      if (!res1.success) {
-        expect(res1.status).toBe('rejected');
+      expect(res1.status).toBe('rejected');
+      if (res1.status === 'rejected') {
         expect(res1.errors[0].code).toBe('ARRAY_NOT_PERMITTED');
       }
 
@@ -257,15 +264,15 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
 
       const res2 = validateLunarObserver(propArray);
       expect(res2.success).toBe(false);
-      if (!res2.success) {
-        expect(res2.status).toBe('rejected');
+      expect(res2.status).toBe('rejected');
+      if (res2.status === 'rejected') {
         expect(res2.errors[0].code).toBe('ARRAY_NOT_PERMITTED');
       }
     });
   });
 
   /* ------------------------------------------------------------------------ */
-  /* 4. Latitude Limits and Neighboring Invalid Values                         */
+  /* 4. Latitude Boundaries and Neighbors                                     */
   /* ------------------------------------------------------------------------ */
   test.describe('4. Latitude Boundaries & Exterior Neighbors', () => {
     test('accepts exact latitude limits -90.0° and +90.0°', () => {
@@ -277,6 +284,10 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(south.success).toBe(true);
+      expect(south.status).toBe('complete');
+      if (south.status === 'complete') {
+        expect(south.observer.latitudeDeg).toBe(-90.0);
+      }
 
       const north = validateLunarObserver({
         latitudeDeg: 90.0,
@@ -286,6 +297,10 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(north.success).toBe(true);
+      expect(north.status).toBe('complete');
+      if (north.status === 'complete') {
+        expect(north.observer.latitudeDeg).toBe(90.0);
+      }
     });
 
     test('accepts immediate interior neighbors -89.9999° and +89.9999°', () => {
@@ -297,6 +312,10 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(southInterior.success).toBe(true);
+      expect(southInterior.status).toBe('complete');
+      if (southInterior.status === 'complete') {
+        expect(southInterior.observer.latitudeDeg).toBe(-89.9999);
+      }
 
       const northInterior = validateLunarObserver({
         latitudeDeg: 89.9999,
@@ -306,6 +325,10 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(northInterior.success).toBe(true);
+      expect(northInterior.status).toBe('complete');
+      if (northInterior.status === 'complete') {
+        expect(northInterior.observer.latitudeDeg).toBe(89.9999);
+      }
     });
 
     test('rejects immediate exterior neighbors -90.0001° and +90.0001°', () => {
@@ -317,8 +340,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(southExterior.success).toBe(false);
-      if (!southExterior.success) {
-        expect(southExterior.status).toBe('rejected');
+      expect(southExterior.status).toBe('rejected');
+      if (southExterior.status === 'rejected') {
         expect(southExterior.errors[0].code).toBe('LATITUDE_OUT_OF_BOUNDS');
       }
 
@@ -330,8 +353,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         heightInterpretation: 'reference_surface_zero',
       });
       expect(northExterior.success).toBe(false);
-      if (!northExterior.success) {
-        expect(northExterior.status).toBe('rejected');
+      expect(northExterior.status).toBe('rejected');
+      if (northExterior.status === 'rejected') {
         expect(northExterior.errors[0].code).toBe('LATITUDE_OUT_OF_BOUNDS');
       }
     });
@@ -366,11 +389,13 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       });
 
       expect(result.success).toBe(true);
-      if (result.success) {
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
         expect(result.observer.poleStatus).toBe('south_pole');
-        expect(result.observer.azimuth.status).toBe('undefined_at_pole');
-        if (result.observer.azimuth.status === 'undefined_at_pole') {
-          expect(result.observer.azimuth.reason).toContain('all directions point north');
+        const azimuth = result.observer.azimuth;
+        expect(azimuth.status).toBe('undefined_at_pole');
+        if (azimuth.status === 'undefined_at_pole') {
+          expect(azimuth.reason).toContain('all directions point north');
         }
       }
     });
@@ -385,11 +410,13 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       });
 
       expect(result.success).toBe(true);
-      if (result.success) {
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
         expect(result.observer.poleStatus).toBe('north_pole');
-        expect(result.observer.azimuth.status).toBe('undefined_at_pole');
-        if (result.observer.azimuth.status === 'undefined_at_pole') {
-          expect(result.observer.azimuth.reason).toContain('all directions point south');
+        const azimuth = result.observer.azimuth;
+        expect(azimuth.status).toBe('undefined_at_pole');
+        if (azimuth.status === 'undefined_at_pole') {
+          expect(azimuth.reason).toContain('all directions point south');
         }
       }
     });
@@ -404,7 +431,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       });
 
       expect(result.success).toBe(true);
-      if (result.success) {
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
         expect(result.observer.poleStatus).toBe('not_at_pole');
         expect(result.observer.azimuth.status).toBe('defined');
       }
@@ -425,7 +453,8 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       });
 
       expect(result.success).toBe(true);
-      if (result.success) {
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
         // Must be unavailable: no false provider readiness claimed
         expect(result.observer.frameCompatibility.status).toBe('unavailable');
         expect(result.observer.frameCompatibility.sourceFrame).toBe('MOON_TREK_MAP');
