@@ -32,6 +32,24 @@ Sultan's implementation areas are `src/app`, `src/components`, `src/hooks`, appl
 
 Shared files include `package.json`, `pnpm-lock.yaml`, compiler/build/test configuration, CI, and the root documents. Sultan coordinates these changes. Rameen lists needed shared changes in her PR or an interface handoff; Sultan implements them on a separate task branch unless ownership of a specific file change is explicitly transferred. Neither contributor changes a shared file concurrently with another active task.
 
+### Mission workflow integration assignment
+
+Sultan is assigned the end-to-end mission integration task on `sultan/mission-workflow-local-analysis`: live Horizons retrieval, bounded observer/time inputs, sampled geometric visibility, comparison, charts and reports. Inputs explicitly adopt the Horizons mean-Earth coordinate model; a verified transformation from Moon Trek map coordinates remains a separate scientific requirement.
+
+The coordinated path policy permits this exact Sultan branch to change the following scientific files alongside its application implementation:
+
+- `src/lib/api/lunar-horizons.ts`
+- `src/lib/science/mission-analysis.ts`
+- `src/lib/validation/mission-analysis.ts`
+- `src/types/mission-analysis.ts`
+- `tests/science/mission-analysis.spec.ts`
+- `tests/science/fixtures/horizons-sun.json`
+- `tests/science/fixtures/horizons-earth.json`
+
+Other scientific paths and other Sultan branches retain their existing boundaries. Rameen's observer-contract assignment continues separately in PR #11, and her merged Moon Trek source research remains credited. Coordinate concurrent changes through Sultan before editing these assigned integration files.
+
+Merge this policy into `main` before publishing the dependent implementation PR: the ownership workflow executes trusted base-branch code, so an allowance added only by the implementation PR cannot authorize itself.
+
 ## Starting a task
 
 1. Identify the contributor, task ID, allowed files, acceptance criteria, and dependencies. If identity or assignment is unclear, ask before editing.
@@ -76,6 +94,7 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | p5-comparison-ui | Sultan | Candidate comparison flow, charts and incomplete-data handling | Wait for p5-comparison-science |
 | terrain-data | Rameen | DEM collection/processing and terrain-adjusted visibility with documented resolution and verified horizon methods | Deferred until the core 2D workflow works and a suitable dataset is verified |
 | visualization-3d | Sultan | Optional 3D visualization of verified lunar data | Deferred until the core 2D workflow works |
+| mission-workflow | Sultan | Deliver integrated live Sun/Earth geometry, sampled visibility, comparison and reports | Assigned on `sultan/mission-workflow-local-analysis`; uses explicit mean-Earth inputs and the branch-scoped file policy above |
 
 ## Interface handoffs
 
