@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MissionControls } from "@/components/explorer/mission-controls";
 import { MissionTimeline } from "@/components/explorer/mission-timeline";
-import { explorerSessionLink, missionTimeToUtc, type ExplorerSession } from "@/components/explorer/explorer-session";
+import { explorerSessionLink, missionTimeToUtc, saveLastExplorerSession, type ExplorerSession } from "@/components/explorer/explorer-session";
 import { formatMapCoordinates, isMapLocation, normalizeMapLongitude, type MapLocation } from "@/components/explorer/lunar-map-coordinates";
 import { useMissionAnalysis } from "@/hooks/use-mission-analysis";
 
@@ -28,7 +28,9 @@ export function ComparisonWorkspace({ initialSession, initialTime, invalidSessio
 
   useEffect(() => {
     if (missionTime !== "" && !missionTimeUtc) return;
-    const href = explorerSessionLink({ ...initialSession, selected, sites, missionTimeUtc }, window.location.href);
+    const currentSession: ExplorerSession = { ...initialSession, selected, sites, missionTimeUtc };
+    saveLastExplorerSession(currentSession);
+    const href = explorerSessionLink(currentSession, window.location.href);
     if (href !== window.location.href) window.history.replaceState(window.history.state, "", href);
   }, [initialSession, selected, sites, missionTime, missionTimeUtc]);
 

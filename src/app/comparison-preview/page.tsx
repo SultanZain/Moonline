@@ -1,19 +1,9 @@
-/**
- * Restore comparison inputs and compose the live site-comparison workspace.
- * @author Sultan
- */
-import type { Metadata } from "next";
-import { ComparisonWorkspace } from "@/components/comparison/comparison-workspace";
-import { emptyExplorerSession, readExplorerSession } from "@/components/explorer/explorer-session";
+/** Keep existing comparison links working at the live canonical address. @author Sultan */
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Site comparison" };
-
-export default async function ComparisonPage({ searchParams }: { searchParams: Promise<{ session?: string | string[] }> }) {
+export default async function LegacyComparisonPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const parameters = await searchParams;
   const query = new URLSearchParams();
-  for (const value of Array.isArray(parameters.session) ? parameters.session : parameters.session === undefined ? [] : [parameters.session]) query.append("session", value);
-  const read = readExplorerSession(query.toString());
-  const session = read.status === "ready" ? read.session : emptyExplorerSession();
-  const initialTime = read.status === "ready" ? session.missionTimeUtc?.slice(0, 16) ?? "" : new Date().toISOString().slice(0, 16);
-  return <ComparisonWorkspace initialSession={session} initialTime={initialTime} invalidSession={read.status === "invalid"} />;
+  for (const [key, value] of Object.entries(parameters)) for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) query.append(key, item);
+  redirect(`/comparison${query.size ? `?${query}` : ""}`);
 }

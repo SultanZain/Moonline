@@ -12,7 +12,7 @@ import { explorerSessionLink, readExplorerSession } from "@/components/explorer/
 
 const destinations = [
   { href: "/explorer", label: "Mission Explorer", icon: Map },
-  { href: "/comparison-preview", label: "Site comparison", icon: Radar },
+  { href: "/comparison", label: "Site comparison", icon: Radar },
   { href: "/methodology", label: "Methodology", icon: BookOpen },
 ];
 
@@ -29,7 +29,7 @@ export function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           aria-label={label}
           onClick={event => {
             if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0 &&
-              (pathname === "/explorer" || pathname === "/comparison-preview") && (href === "/explorer" || href === "/comparison-preview")) {
+              (pathname === "/explorer" || pathname === "/comparison") && (href === "/explorer" || href === "/comparison")) {
               const read = readExplorerSession(window.location.search);
               if (read.status === "ready") {
                 event.preventDefault();

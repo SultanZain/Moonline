@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { ContextSheet } from "./context-sheet";
 import { SiteContext } from "./site-context";
 import { ExplorerSessionActions } from "./explorer-session-actions";
-import { emptyExplorerSession, explorerSessionLink, missionTimeToUtc, readExplorerSession, type CandidateImport, type ExplorerSession } from "./explorer-session";
+import { emptyExplorerSession, explorerSessionLink, missionTimeToUtc, readExplorerSession, readLastExplorerSession, saveLastExplorerSession, type CandidateImport, type ExplorerSession } from "./explorer-session";
 import { formatMapCoordinates, isMapLocation, type MapLocation } from "./lunar-map-coordinates";
 import {
   moonTrekBasemaps, moonTrekLayers, moonTrekLayerUrl, moonTrekMetadataUrl, moonTrekOverlayIds, moonTrekSlopeLegendUrl,
@@ -93,11 +93,14 @@ export function LunarMap() {
   const missionTimeUtc = missionTimeToUtc(missionTime);
   const session: ExplorerSession | null = snapshot && (!missionTime || missionTimeUtc) ?
     { version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view } : null;
+  const comparisonUrl = session ? new URL(explorerSessionLink(session, "https://moonline.invalid/comparison")) : null;
+  const comparisonHref = comparisonUrl ? comparisonUrl.pathname + comparisonUrl.search : "/comparison";
 
   function saveSessionUrl() {
     if (urlTimer.current) clearTimeout(urlTimer.current);
     urlTimer.current = null;
     if (!session || window.location.pathname !== "/explorer") return;
+    saveLastExplorerSession(session);
     const href = explorerSessionLink(session, window.location.href);
     if (href === window.location.href) return;
     try { window.history.replaceState(window.history.state, "", href); }
@@ -116,13 +119,14 @@ export function LunarMap() {
     setSearchError(null); setCoordinateError(null);
   }
 
-  const restoreFromHistory = useEffectEvent(() => {
+  const restoreFromHistory = useEffectEvent((useBackup = false) => {
     if (!controller.current) return;
     if (urlTimer.current) clearTimeout(urlTimer.current);
     urlTimer.current = null;
-    const read = readExplorerSession(window.location.search);
+    const urlSession = readExplorerSession(window.location.search);
+    const read = useBackup && urlSession.status === "empty" ? readLastExplorerSession() : urlSession;
     applySession(read.status === "ready" ? read.session : emptyExplorerSession());
-    setSessionError(read.status === "invalid" ? "Invalid exploration link. The map opened at its default view." : null);
+    setSessionError(urlSession.status === "invalid" ? "Invalid exploration link. The map opened at its default view." : null);
   });
 
   const onSelection = useEffectEvent((location: MapLocation) => {
@@ -142,7 +146,7 @@ export function LunarMap() {
         if (cursor.current) cursor.current.textContent = location ? formatMapCoordinates(location) : "—, —";
       }, onSelection);
       controller.current = handle;
-      restoreFromHistory();
+      restoreFromHistory(true);
     }).catch(() => { if (!cancelled) setUnavailable(true); });
     const onHistory = () => restoreFromHistory();
     window.addEventListener("popstate", onHistory);
@@ -153,7 +157,9 @@ export function LunarMap() {
 
   useEffect(() => {
     if (!snapshot || (missionTime && !missionTimeUtc)) return;
-    const href = explorerSessionLink({ version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view }, window.location.href);
+    const currentSession: ExplorerSession = { version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view };
+    saveLastExplorerSession(currentSession);
+    const href = explorerSessionLink(currentSession, window.location.href);
     if (href === window.location.href) return;
     const timer = setTimeout(() => saveFromEffect(), 500);
     urlTimer.current = timer;
@@ -438,7 +444,7 @@ export function LunarMap() {
       {fullscreenError ? <p role="alert" className="map-fullscreen-error map-surface">{fullscreenError}</p> : null}
 
       <ContextSheet open={inspectorOpen} onOpenChange={setInspectorOpen} container={rootElement} onReturnFocus={() => inspectorButton.current?.focus()}>
-        <SiteContext location={selected} candidates={candidates} missionTime={missionTime} clearedCount={clearedCandidates?.length ?? 0} onFit={fitCandidates}
+        <SiteContext location={selected} candidates={candidates} missionTime={missionTime} comparisonHref={comparisonHref} clearedCount={clearedCandidates?.length ?? 0} onFit={fitCandidates}
           analysisControls={<MissionControls mission={mission} candidateCount={candidates.length} onTimeline={() => {
             setInspectorOpen(false); setPopup(null); mission.setTimelineOpen(true);
             requestAnimationFrame(() => rootElement?.querySelector<HTMLInputElement>('input[aria-label="Analysis time"]')?.focus());
