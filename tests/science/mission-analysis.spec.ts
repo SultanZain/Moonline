@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import { horizonsQuery, parseHorizonsTable } from "../../src/lib/api/lunar-horizons";
 import { deriveTargetAnalysis, isMissionAnalysis, missionReport } from "../../src/lib/science/mission-analysis";
 import { isRecord, validateMissionInput } from "../../src/lib/validation/mission-analysis";
-import type { HorizonsProvenance, MissionInput, PositionSample } from "../../src/types/mission-analysis";
+import type { HorizonsProvenance, MissionAnalysis, MissionInput, PositionSample } from "../../src/types/mission-analysis";
 
 const input: MissionInput = { observer: { latitude: -85, longitude: 20, heightMeters: 0, coordinateBasis: "adopted_mean_earth" }, startUtc: "2026-11-14T00:00:00.000Z", endUtc: "2026-11-15T00:00:00.000Z", stepMinutes: 60 };
 function fixture(target: "sun" | "earth") {
@@ -17,6 +17,10 @@ function reference(target: "sun" | "earth") {
   const parsed = parseHorizonsTable(source.payload, input, target, source.url, source.retrievedAt);
   if (parsed.status !== "ready") throw new Error("Reference unavailable");
   return parsed;
+}
+
+function referenceAnalysis(): MissionAnalysis {
+  return { input, generatedUtc: input.startUtc, sun: reference("sun"), earth: reference("earth"), terrainVisibility: "unavailable", method: "airless_target_center_tangent_horizon" };
 }
 
 test("observed JPL Sun and Earth tables retain independent angles, dates and source metadata", () => {
@@ -84,9 +88,94 @@ test("missing samples break intervals and preserve unknown duration; zero is bel
 });
 
 test("reports preserve the real inputs, sources and limitations rather than claim mission suitability", () => {
-  const analysis = { input, generatedUtc: input.startUtc, sun: reference("sun"), earth: reference("earth"), terrainVisibility: "unavailable", method: "airless_target_center_tangent_horizon" };
+  const analysis = referenceAnalysis();
   expect(isMissionAnalysis(analysis)).toBe(true);
   if (!isMissionAnalysis(analysis)) throw new Error("Invalid analysis");
   const report = missionReport([{ name: "Reference observer", analysis }]);
   expect(report).toContain("DE441"); expect(report).toContain("1,737,400 m reference sphere"); expect(report).toContain("No transformation"); expect(report).toContain("Terrain obstruction");
+});
+
+test("response validation rejects missing, duplicated, reordered and non-UTC sample times", () => {
+  const analysis = referenceAnalysis(), sun = reference("sun");
+  const first = sun.samples[0];
+  if (!first) throw new Error("Missing reference sample");
+  const malformed = [
+    sun.samples.slice(1),
+    sun.samples.toReversed(),
+    [first, first, ...sun.samples.slice(2)],
+    [{ ...first, timestamp: "2026-11-14T05:00:00.000+05:00" }, ...sun.samples.slice(1)],
+    [...sun.samples.slice(0, -1), { ...first, timestamp: "2026-11-15T01:00:00.000Z" }],
+  ];
+  for (const samples of malformed) expect(isMissionAnalysis({ ...analysis, sun: { ...sun, samples } })).toBe(false);
+  expect(isMissionAnalysis(analysis)).toBe(true);
+});
+
+test("response validation rejects invented duration, events, windows and missing counts", () => {
+  const analysis = referenceAnalysis(), sun = reference("sun");
+  const mutations = [
+    { ...sun, missingSamples: 9999 },
+    { ...sun, visibleHours: 25 },
+    { ...sun, events: [{ timestamp: input.startUtc, kind: "rise" }] },
+    { ...sun, windows: [{ startUtc: input.endUtc, endUtc: input.startUtc, openStart: true, openEnd: true }] },
+    { ...sun, windows: sun.windows.map(window => ({ ...window, openStart: false })) },
+  ];
+  for (const target of mutations) expect(isMissionAnalysis({ ...analysis, sun: target })).toBe(false);
+});
+
+test("missing elevation responses require unknown duration and accurately derived windows", () => {
+  const analysis = referenceAnalysis(), sun = reference("sun");
+  // Transport mutations exercise unavailable data; they are not new lunar reference measurements.
+  const allMissing = deriveTargetAnalysis(sun.samples.map(position => ({ ...position, elevationDeg: null })), sun.provenance);
+  expect(isMissionAnalysis({ ...analysis, sun: allMissing })).toBe(true);
+  expect(isMissionAnalysis({ ...analysis, sun: { ...allMissing, visibleHours: 0 } })).toBe(false);
+  const partial = deriveTargetAnalysis(sun.samples.map((position, index) => index === 1 ? { ...position, elevationDeg: null } : position), sun.provenance);
+  expect(isMissionAnalysis({ ...analysis, sun: partial })).toBe(true);
+  expect(isMissionAnalysis({ ...analysis, sun: { ...partial, missingSamples: 0 } })).toBe(false);
+});
+
+test("response validation requires actual provider metadata and the matching observer query", () => {
+  const analysis = referenceAnalysis(), sun = reference("sun");
+  const wrongSite = new URL(sun.provenance.queryUrl); wrongSite.searchParams.set("SITE_COORD", "'30,-85,0'");
+  const duplicateCenter = new URL(sun.provenance.queryUrl); duplicateCenter.searchParams.append("CENTER", "'coord@399'");
+  const badMetadata = [
+    { ...sun.provenance, source: "Synthetic horizon test" },
+    { ...sun.provenance, centerFrame: "IAU_MOON" },
+    { ...sun.provenance, radiusKm: 6378.1 },
+    { ...sun.provenance, timeScale: "TT" },
+    { ...sun.provenance, apiVersion: "test", ephemeris: "test" },
+    { ...sun.provenance, retrievedUtc: "2026-02-30T00:00:00.000Z" },
+    { ...sun.provenance, queryUrl: "https://ssd.jpl.nasa.gov.example.test/api/horizons.api" },
+    { ...sun.provenance, queryUrl: "javascript:alert(1)" },
+    { ...sun.provenance, queryUrl: reference("earth").provenance.queryUrl },
+    { ...sun.provenance, queryUrl: wrongSite.toString() },
+    { ...sun.provenance, queryUrl: duplicateCenter.toString() },
+  ];
+  for (const provenance of badMetadata) expect(isMissionAnalysis({ ...analysis, sun: { ...sun, provenance } })).toBe(false);
+  expect(isMissionAnalysis({ ...analysis, generatedUtc: "2026-11-14T05:00:00.000+05:00" })).toBe(false);
+});
+
+test("partial results and reports preserve unavailable targets and failed candidate sites", () => {
+  const analysis: MissionAnalysis = { ...referenceAnalysis(), earth: { status: "error", message: "Earth data unavailable." } };
+  expect(isMissionAnalysis(analysis)).toBe(true);
+  expect(isMissionAnalysis({ ...analysis, sun: { status: "error", message: "Sun data unavailable." } })).toBe(false);
+  const report = missionReport([{ name: "Reference observer", analysis }], [{ name: "Second | candidate", message: "Horizons timed out.\nRetry shortly." }]);
+  expect(report).toContain("### Earth\n\nUnavailable: Earth data unavailable.");
+  expect(report).toContain("| Start (UTC) | End (UTC) | Start boundary | End boundary |");
+  expect(report).toContain(`| ${input.startUtc} | ${input.endUtc} | Open | Open |`);
+  expect(report).toContain("Open boundaries mark observation limits or adjacent missing samples");
+  expect(report).toContain("## Unavailable sites");
+  expect(report).toContain("| Second \\| candidate | Horizons timed out. Retry shortly. |");
+  expect(missionReport([], [{ name: "Failed candidate", message: "Data unavailable." }])).toContain("| Failed candidate | Data unavailable. |");
+});
+
+test("reports distinguish missing intervals from known absence of visibility", () => {
+  const analysis = referenceAnalysis(), sun = reference("sun");
+  const missing = deriveTargetAnalysis(sun.samples.map(position => ({ ...position, elevationDeg: null })), sun.provenance);
+  const missingReport = missionReport([{ name: "Unavailable transport fixture", analysis: { ...analysis, sun: missing } }]);
+  expect(missingReport).toContain("Estimated geometric visibility: Unknown (missing samples)");
+  expect(missingReport).toContain("| — | — | Unknown; missing elevations | — |");
+  const below = deriveTargetAnalysis(sun.samples.map(position => ({ ...position, elevationDeg: -1 })), sun.provenance);
+  const belowReport = missionReport([{ name: "Below-horizon transport fixture", analysis: { ...analysis, sun: below } }]);
+  expect(belowReport).toContain("Estimated geometric visibility: 0.00 hours");
+  expect(belowReport).toContain("| — | — | No above-horizon interval found | — |");
 });
