@@ -24,7 +24,6 @@ import {
   validateLunarObserver,
   isLunarObserver,
   normalizeLongitude180,
-  evaluatePoleStatusAndAzimuth,
 } from '../../src/lib/validation/lunar-observer';
 
 test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () => {
