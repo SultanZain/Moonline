@@ -15,7 +15,7 @@ test("root opens Explorer and navigation reaches methodology", async ({ page }) 
   await expect(page.getByRole("region", { name: "Lunar imagery map" })).toBeVisible();
   await page.getByRole("link", { name: "Methodology", exact: true }).click();
   await expect(page).toHaveURL(/\/methodology$/); await expect(page.getByRole("heading", { level: 1 })).toHaveText("Methodology");
-  await expect(page.getByText("Explorer connects NASA imagery with live Sun/Earth geometry", { exact: false })).toBeVisible();
+  await expect(page.getByText("Explorer and Site comparison use live Sun/Earth geometry", { exact: false })).toBeVisible();
   await page.getByRole("link", { name: "Back to Explorer" }).click();
   await expect(page.getByRole("region", { name: "Lunar imagery map" })).toBeVisible();
 });
