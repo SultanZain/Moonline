@@ -62,7 +62,7 @@ test("Explorer navigation opens an empty comparison without example results or a
   await expect(page.getByRole("link", { name: "Site comparison", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Site comparison", exact: true })).toBeVisible();
   await expect(shortlist(page).getByRole("listitem")).toHaveCount(0);
-  await expect(analysis(page).getByRole("button", { name: "Compare 0", exact: true })).toBeDisabled();
+  await expect(analysis(page).getByRole("button", { name: "Compare sites", exact: true })).toBeDisabled();
   await expect(analysis(page).getByRole("button", { name: "Analyze", exact: true })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Comparison results", exact: true })).toContainText("Add at least two sites");
   await expect(page.getByRole("heading", { name: "Illustrative UI preview" })).toHaveCount(0);
@@ -78,7 +78,7 @@ test("two entered sites require explicit observer choices and share UTC settings
   const requests = await mockMissionAnalysis(page);
   await page.goto("/comparison-preview");
   await addSite(page, sites[0]!);
-  await expect(analysis(page).getByRole("button", { name: "Compare 1", exact: true })).toBeDisabled();
+  await expect(analysis(page).getByRole("button", { name: "Compare sites", exact: true })).toBeDisabled();
   await addSite(page, sites[1]!);
   await page.locator("#mission-time").fill(utc.slice(0, 16));
   await analysis(page).getByLabel("Window", { exact: true }).selectOption("1");
@@ -141,7 +141,7 @@ test("failed sites remain explicit in results and reports, and removal invalidat
   await expect(shortlist(page).getByRole("listitem")).toHaveCount(1);
   await expect(timeline(page)).toHaveCount(0);
   await expect(analysis(page).getByRole("region", { name: "Unavailable sites", exact: true })).toHaveCount(0);
-  await expect(analysis(page).getByRole("button", { name: "Compare 1", exact: true })).toBeDisabled();
+  await expect(analysis(page).getByRole("button", { name: "Compare sites", exact: true })).toBeDisabled();
 });
 
 test("Explorer selection, candidates, UTC and map settings travel to comparison and back", async ({ page }) => {
