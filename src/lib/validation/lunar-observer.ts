@@ -4,7 +4,8 @@
  * Runtime validator and normalizer for the MOONLINE Lunar Observer Contract.
  * Aligned with Sultan's types (src/types/lunar-observer.ts).
  *
- * Ownership: Data & Science (Rameen)
+ * Fully corrected version: Fixes type predicate crashes, metadata validation,
+ * zero-height constraints, array boundaries, and datum/interpretation mismatches.
  */
 
 import type {
@@ -22,6 +23,9 @@ import type {
   LunarObserverMissingField,
   LunarObserverValidationIssue,
   LunarObserverValidationResult,
+  LunarCoordinateSystem,
+  LunarLongitudeConvention,
+  LunarReferenceFrame,
 } from '../../types/lunar-observer';
 
 export const MOON_2000_REFERENCE_SPHERE: LunarReferenceSphere = {
@@ -32,7 +36,31 @@ export const MOON_2000_REFERENCE_SPHERE: LunarReferenceSphere = {
 const MIN_PHYSICAL_SURFACE_HEIGHT_METERS = -12000;
 const MAX_PHYSICAL_SURFACE_HEIGHT_METERS = 15000;
 
-const SUPPORTED_DATUMS: readonly LunarHeightDatum[] = ['reference_sphere', 'terrain_surface'];
+const SUPPORTED_DATUMS: readonly LunarHeightDatum[] = [
+  'reference_sphere',
+  'terrain_surface',
+];
+
+const SUPPORTED_INTERPRETATIONS: readonly LunarHeightInterpretation[] = [
+  'reference_surface_zero',
+  'reference_surface_offset',
+  'measured_terrain_elevation',
+  'height_above_terrain',
+];
+
+const SUPPORTED_COORD_SYSTEMS: readonly LunarCoordinateSystem[] = [
+  'MOON_TREK_MAP',
+];
+
+const SUPPORTED_LONGITUDE_CONVENTIONS: readonly LunarLongitudeConvention[] = [
+  'positive_east',
+];
+
+const SUPPORTED_REFERENCE_FRAMES: readonly LunarReferenceFrame[] = [
+  'MOON_ME',
+  'MOON_PA',
+  'IAU_MOON',
+];
 
 /**
  * Runtime type guard: Checks if value is a finite number.
@@ -133,12 +161,51 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
   const warnings: string[] = [];
 
   // Extract coordinates (supporting latitudeDeg / latitude and longitudeDeg / longitude)
-  const coordsObj = (typeof raw.coordinates === 'object' && raw.coordinates !== null && !Array.isArray(raw.coordinates))
-    ? (raw.coordinates as Record<string, unknown>)
-    : raw;
+  const coordsObj =
+    typeof raw.coordinates === 'object' &&
+    raw.coordinates !== null &&
+    !Array.isArray(raw.coordinates)
+      ? (raw.coordinates as Record<string, unknown>)
+      : raw;
 
   const rawLat = coordsObj.latitudeDeg ?? coordsObj.latitude;
   const rawLon = coordsObj.longitudeDeg ?? coordsObj.longitude;
+
+  // 1.1 Validate Coordinate System Metadata if provided
+  const rawCoordSys = coordsObj.coordinateSystem ?? raw.coordinateSystem;
+  if (rawCoordSys !== undefined && rawCoordSys !== null) {
+    if (!SUPPORTED_COORD_SYSTEMS.includes(rawCoordSys as LunarCoordinateSystem)) {
+      errors.push({
+        field: 'coordinateSystem',
+        code: 'UNSUPPORTED_COORDINATE_SYSTEM',
+        message: `Coordinate system "${String(rawCoordSys)}" is unsupported. Expected "MOON_TREK_MAP".`,
+      });
+    }
+  }
+
+  // 1.2 Validate Longitude Convention Metadata if provided
+  const rawLonConv = coordsObj.longitudeConvention ?? raw.longitudeConvention;
+  if (rawLonConv !== undefined && rawLonConv !== null) {
+    if (!SUPPORTED_LONGITUDE_CONVENTIONS.includes(rawLonConv as LunarLongitudeConvention)) {
+      errors.push({
+        field: 'longitudeConvention',
+        code: 'UNSUPPORTED_LONGITUDE_CONVENTION',
+        message: `Longitude convention "${String(rawLonConv)}" is unsupported. Expected "positive_east".`,
+      });
+    }
+  }
+
+  // 1.3 Validate Reference Frame Metadata if provided
+  const rawFrame = coordsObj.referenceFrame ?? raw.referenceFrame ?? raw.frame;
+  if (rawFrame !== undefined && rawFrame !== null) {
+    if (!SUPPORTED_REFERENCE_FRAMES.includes(rawFrame as LunarReferenceFrame)) {
+      errors.push({
+        field: 'frame',
+        code: 'UNSUPPORTED_FRAME',
+        message: `Reference frame "${String(rawFrame)}" is unsupported.`,
+      });
+    }
+  }
 
   // 2. Validate Latitude
   let validLat: number | null = null;
@@ -191,8 +258,8 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     }
   }
 
-  // Reject immediately if coordinate numbers are invalid
-  if (validLat === null || validLon === null) {
+  // Reject immediately if coordinates or metadata had fatal errors
+  if (validLat === null || validLon === null || errors.length > 0) {
     return {
       success: false,
       status: 'rejected',
@@ -227,15 +294,19 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
       'is scheduled for verification in Phase 3 (p3-positions). Coarse spherical identity is not assumed.',
   };
 
-  // 4. Extract Height and Datum (supporting heightMeters / elevationMeters and heightDatum / elevationDatum)
-  const heightObj = (typeof raw.height === 'object' && raw.height !== null && !Array.isArray(raw.height))
-    ? (raw.height as Record<string, unknown>)
-    : raw;
+  // 4. Extract Height and Datum
+  const heightObj =
+    typeof raw.height === 'object' &&
+    raw.height !== null &&
+    !Array.isArray(raw.height)
+      ? (raw.height as Record<string, unknown>)
+      : raw;
 
   const rawHeightMeters = heightObj.heightMeters ?? heightObj.elevationMeters;
   const rawHeightDatum = heightObj.heightDatum ?? heightObj.elevationDatum;
   const rawHeightInterpretation = heightObj.heightInterpretation;
-  const rawHeightSource = typeof heightObj.heightSource === 'string' ? heightObj.heightSource.trim() : null;
+  const rawHeightSource =
+    typeof heightObj.heightSource === 'string' ? heightObj.heightSource.trim() : null;
 
   // Validate datum if supplied
   let datumError: LunarObserverValidationIssue | null = null;
@@ -249,9 +320,25 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     }
   }
 
+  // Validate heightInterpretation if supplied
+  let interpretationError: LunarObserverValidationIssue | null = null;
+  if (rawHeightInterpretation !== undefined && rawHeightInterpretation !== null) {
+    if (!SUPPORTED_INTERPRETATIONS.includes(rawHeightInterpretation as LunarHeightInterpretation)) {
+      interpretationError = {
+        field: 'heightInterpretation',
+        code: 'DATUM_INTERPRETATION_MISMATCH',
+        message: `Height interpretation "${String(rawHeightInterpretation)}" is unsupported.`,
+      };
+    }
+  }
+
   const hasHeight = rawHeightMeters !== undefined && rawHeightMeters !== null;
-  const hasDatum = rawHeightDatum !== undefined && rawHeightDatum !== null && datumError === null;
-  const hasInterpretation = rawHeightInterpretation !== undefined && rawHeightInterpretation !== null;
+  const hasDatum =
+    rawHeightDatum !== undefined && rawHeightDatum !== null && datumError === null;
+  const hasInterpretation =
+    rawHeightInterpretation !== undefined &&
+    rawHeightInterpretation !== null &&
+    interpretationError === null;
 
   // Handle incomplete observer
   if (!hasHeight || !hasDatum || !hasInterpretation) {
@@ -261,13 +348,17 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     if (datumError) {
       incompleteErrors.push(datumError);
     }
+    if (interpretationError) {
+      incompleteErrors.push(interpretationError);
+    }
 
     if (!hasHeight) {
       missingFields.push('heightMeters');
       incompleteErrors.push({
         field: 'heightMeters',
         code: 'MISSING_HEIGHT',
-        message: 'Observer height is missing or null. Topocentric ephemeris requires an explicit height; missing height cannot be defaulted to zero.',
+        message:
+          'Observer height is missing or null. Topocentric ephemeris requires an explicit height; missing height cannot be defaulted to zero.',
       });
     }
 
@@ -280,19 +371,18 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
       });
     }
 
-    if (!hasInterpretation) {
+    if (!hasInterpretation && !interpretationError) {
       missingFields.push('heightInterpretation');
       incompleteErrors.push({
         field: 'heightInterpretation',
         code: 'MISSING_HEIGHT_INTERPRETATION',
         message:
-          'Height interpretation is required. ' +
-          'Supported: "reference_surface_zero", "reference_surface_offset", "measured_terrain_elevation", "height_above_terrain".',
+          'Height interpretation is required. Supported: "reference_surface_zero", "reference_surface_offset", "measured_terrain_elevation", "height_above_terrain".',
       });
     }
 
-    // If an invalid datum was provided, this is a rejection; if purely missing, it is incomplete
-    if (datumError) {
+    // If an invalid datum or interpretation was explicitly supplied, this is a rejection
+    if (datumError || interpretationError) {
       return {
         success: false,
         status: 'rejected',
@@ -310,7 +400,7 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     };
   }
 
-  // 5. If height was provided, validate its number and physical bounds
+  // 5. Validate height value and physical bounds
   if (!isFiniteNumber(rawHeightMeters)) {
     errors.push({
       field: 'heightMeters',
@@ -320,7 +410,10 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     return { success: false, status: 'rejected', errors };
   }
 
-  if (rawHeightMeters < MIN_PHYSICAL_SURFACE_HEIGHT_METERS || rawHeightMeters > MAX_PHYSICAL_SURFACE_HEIGHT_METERS) {
+  if (
+    rawHeightMeters < MIN_PHYSICAL_SURFACE_HEIGHT_METERS ||
+    rawHeightMeters > MAX_PHYSICAL_SURFACE_HEIGHT_METERS
+  ) {
     errors.push({
       field: 'heightMeters',
       code: 'HEIGHT_OUT_OF_BOUNDS',
@@ -334,9 +427,12 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
   const heightDatum = rawHeightDatum as LunarHeightDatum;
   const heightInterpretation = rawHeightInterpretation as LunarHeightInterpretation;
 
-  // Validate datum and interpretation consistency
+  // 6. Validate datum and interpretation consistency
   if (heightDatum === 'reference_sphere') {
-    if (heightInterpretation === 'measured_terrain_elevation' || heightInterpretation === 'height_above_terrain') {
+    if (
+      heightInterpretation === 'measured_terrain_elevation' ||
+      heightInterpretation === 'height_above_terrain'
+    ) {
       errors.push({
         field: 'heightInterpretation',
         code: 'DATUM_INTERPRETATION_MISMATCH',
@@ -344,7 +440,17 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
       });
       return { success: false, status: 'rejected', errors };
     }
-    if (rawHeightMeters === 0 && heightInterpretation === 'reference_surface_zero') {
+
+    // Strictly enforce: reference_surface_zero MUST have heightMeters === 0
+    if (heightInterpretation === 'reference_surface_zero') {
+      if (rawHeightMeters !== 0) {
+        errors.push({
+          field: 'heightInterpretation',
+          code: 'DATUM_INTERPRETATION_MISMATCH',
+          message: `Interpretation "reference_surface_zero" strictly requires heightMeters === 0 (received ${rawHeightMeters}m). Use "reference_surface_offset" for non-zero sphere offsets.`,
+        });
+        return { success: false, status: 'rejected', errors };
+      }
       warnings.push(
         'Observer height is explicitly set to 0 metres on the reference sphere. ' +
         'This represents a mathematical datum, not a measured terrain surface elevation.'
@@ -353,7 +459,10 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
   }
 
   if (heightDatum === 'terrain_surface') {
-    if (heightInterpretation === 'reference_surface_zero' || heightInterpretation === 'reference_surface_offset') {
+    if (
+      heightInterpretation === 'reference_surface_zero' ||
+      heightInterpretation === 'reference_surface_offset'
+    ) {
       errors.push({
         field: 'heightInterpretation',
         code: 'DATUM_INTERPRETATION_MISMATCH',
@@ -384,7 +493,8 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
       'JPL Horizons topocentric ephemeris retrieval requires Phase 3 Horizons query builder and verified frame transformation.',
   };
 
-  const name = typeof raw.name === 'string' && raw.name.trim().length > 0 ? raw.name.trim() : null;
+  const name =
+    typeof raw.name === 'string' && raw.name.trim().length > 0 ? raw.name.trim() : null;
 
   const observer: ValidatedLunarObserver = {
     name,
@@ -409,10 +519,32 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
 
 /**
  * Boolean type guard for completed lunar observers.
- * Returns true ONLY if input passes validation and is a complete observer.
- * Returns FALSE if elevation is null, missing, or datum is invalid.
+ * Safely checks that input is an actual structured ValidatedLunarObserver
+ * preventing runtime crashes when properties like .height or .coordinates are read.
  */
 export function isLunarObserver(input: unknown): input is ValidatedLunarObserver {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return false;
+  }
+  const obj = input as Record<string, unknown>;
+
+  // Check that the object actually has the structured ValidatedLunarObserver properties
+  const hasStructure =
+    typeof obj.latitudeDeg === 'number' &&
+    typeof obj.longitudeDeg === 'number' &&
+    typeof obj.coordinates === 'object' &&
+    obj.coordinates !== null &&
+    typeof obj.height === 'object' &&
+    obj.height !== null &&
+    typeof obj.referenceSphere === 'object' &&
+    obj.referenceSphere !== null &&
+    typeof obj.azimuth === 'object' &&
+    obj.azimuth !== null;
+
+  if (!hasStructure) {
+    return false;
+  }
+
   const result = validateLunarObserver(input);
   return result.success && result.status === 'complete';
 }
