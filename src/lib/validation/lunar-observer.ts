@@ -2,7 +2,7 @@
  * src/lib/validation/lunar-observer.ts
  *
  * Runtime validator and normalizer for the MOONLINE Lunar Observer Contract.
- * Aligned with Sultan's latest types (src/types/lunar-observer.ts).
+ * Aligned with Sultan's types (src/types/lunar-observer.ts).
  *
  * Ownership: Data & Science (Rameen)
  */
@@ -35,6 +35,14 @@ const MAX_PHYSICAL_SURFACE_HEIGHT_METERS = 15000;
 const SUPPORTED_DATUMS: readonly LunarHeightDatum[] = ['reference_sphere', 'terrain_surface'];
 
 /**
+ * Runtime type guard: Checks if value is a finite number.
+ * Narrows type from unknown to number for TypeScript.
+ */
+export function isFiniteNumber(val: unknown): val is number {
+  return typeof val === 'number' && Number.isFinite(val);
+}
+
+/**
  * Normalizes supported input longitudes into canonical positive-east half-open interval [-180.0, +180.0).
  * - Accepted input ranges: Signed [-180.0, +180.0] or Unsigned [0.0, 360.0].
  * - Inputs outside [-180.0, 360.0] return NaN and are rejected.
@@ -59,6 +67,9 @@ export function normalizeLongitude180(lonDeg: number): number {
   return Object.is(normalized, -0) ? 0 : normalized;
 }
 
+/**
+ * Evaluates pole status and horizontal azimuth definition for a latitude in degrees.
+ */
 export function evaluatePoleStatusAndAzimuth(latitudeDeg: number): {
   poleStatus: LunarPoleStatus;
   azimuth: LunarAzimuthDefinition;
@@ -153,7 +164,7 @@ export function validateLunarObserver(input: unknown): LunarObserverValidationRe
     validLat = rawLat;
   }
 
-   // 3. Validate Longitude
+  // 3. Validate Longitude
   let validLon: number | null = null;
   if (rawLon === undefined || rawLon === null) {
     errors.push({
