@@ -34,7 +34,7 @@ Shared files include `package.json`, `pnpm-lock.yaml`, compiler/build/test confi
 
 ### Mission workflow integration assignment
 
-Sultan is assigned the end-to-end mission integration task on `sultan/mission-workflow-local-analysis`: live Horizons retrieval, bounded observer/time inputs, sampled geometric visibility, comparison, charts and reports. Inputs explicitly adopt the Horizons mean-Earth coordinate model; a verified transformation from Moon Trek map coordinates remains a separate scientific requirement.
+Sultan delivered the end-to-end mission integration task from `sultan/mission-workflow-local-analysis` in [PR #13](https://github.com/SultanZain/Moonline/pull/13): live Horizons retrieval, bounded observer/time inputs, sampled geometric visibility, comparison, charts and reports. Inputs explicitly adopt the Horizons mean-Earth coordinate model; a verified transformation from Moon Trek map coordinates remains a separate scientific requirement.
 
 The coordinated path policy permits this exact Sultan branch to change the following scientific files alongside its application implementation:
 
@@ -48,7 +48,7 @@ The coordinated path policy permits this exact Sultan branch to change the follo
 
 Other scientific paths and other Sultan branches retain their existing boundaries. Rameen's observer-contract assignment continues separately in PR #11, and her merged Moon Trek source research remains credited. Coordinate concurrent changes through Sultan before editing these assigned integration files.
 
-Merge this policy into `main` before publishing the dependent implementation PR: the ownership workflow executes trusted base-branch code, so an allowance added only by the implementation PR cannot authorize itself.
+This policy merged in [PR #12](https://github.com/SultanZain/Moonline/pull/12) before the implementation: the ownership workflow executes trusted base-branch code, so an allowance added only by the implementation PR cannot authorize itself.
 
 ## Starting a task
 
@@ -80,10 +80,10 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | pr-workflow | Sultan | Standing push/merge authorization and contributor branch/path checks | Done; implementation merged in [PR #1](https://github.com/SultanZain/Moonline/pull/1) |
 | p2-data | Rameen | Inspect NASA Moon Trek capabilities, layer coverage, projection, tile matrices and access; document verified source conventions | Done; initial research merged in [PR #6](https://github.com/SultanZain/Moonline/pull/6), expanded source record and corrected accuracy attribution in [PR #8](https://github.com/SultanZain/Moonline/pull/8) |
 | p2-workspace-layout | Sultan | Responsive Explorer workspace and accessible context sheet | Done; merged in [PR #3](https://github.com/SultanZain/Moonline/pull/3) |
-| comparison-preview | Sultan | Standalone live Site comparison, shared inputs, charts and reports | Replaces the historical PR #4 illustrative preview within mission-workflow; uses the same real provider and observer model as Explorer |
+| comparison-preview | Sultan | Standalone live Site comparison, shared inputs, charts and reports | Done; merged in [PR #13](https://github.com/SultanZain/Moonline/pull/13), replacing the historical PR #4 illustrative preview |
 | p2-map-imagery | Sultan | Map-first Explorer, NASA basemaps/overlays, search, map-coordinate selection, fullscreen and candidate export | Done; merged in [PR #9](https://github.com/SultanZain/Moonline/pull/9); scientific observer inputs remain separate |
 | p2-session | Sultan | Reopenable exploration links, candidate-file imports and preserved map/site/time state | Done; merged in [PR #10](https://github.com/SultanZain/Moonline/pull/10); independent of the scientific observer contract |
-| p2-shortlist | Sultan | Fit saved sites on the map, preserve selected pin numbers, clear/undo candidates and maintain keyboard focus | Included in mission-workflow delivery; previously verified on `sultan/p2-shortlist-candidate-controls` |
+| p2-shortlist | Sultan | Fit saved sites on the map, preserve selected pin numbers, clear/undo candidates and maintain keyboard focus | Done; merged in [PR #13](https://github.com/SultanZain/Moonline/pull/13) |
 | p2-coordinates | Rameen | Define verified scientific observer-coordinate conventions and exported runtime validation | Changes requested in [PR #11](https://github.com/SultanZain/Moonline/pull/11); source evidence and a complete observer contract remain required |
 | p2-explorer | Sultan | Connect selected map locations and candidate sites to the verified scientific observer contract | Wait for p2-coordinates; map navigation and candidate collection are delivered by p2-map-imagery |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |
@@ -94,7 +94,8 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | p5-comparison-ui | Sultan | Candidate comparison flow, charts and incomplete-data handling | Wait for p5-comparison-science |
 | terrain-data | Rameen | DEM collection/processing and terrain-adjusted visibility with documented resolution and verified horizon methods | Deferred until the core 2D workflow works and a suitable dataset is verified |
 | visualization-3d | Sultan | Optional 3D visualization of verified lunar data | Deferred until the core 2D workflow works |
-| mission-workflow | Sultan | Deliver integrated live Sun/Earth geometry, sampled visibility, comparison and reports | Implemented on `sultan/mission-workflow-local-analysis`; completion follows passing verification and merge into `main`. Uses explicit mean-Earth inputs and the branch-scoped file policy above |
+| mission-workflow | Sultan | Deliver integrated live Sun/Earth geometry, sampled visibility, comparison and reports | Done; merged in [PR #13](https://github.com/SultanZain/Moonline/pull/13) as `3214dab`. Uses explicit mean-Earth inputs and the branch-scoped file policy above |
+| comparison-navigation | Sultan | Canonical `/comparison`, legacy redirect, shortlist comparison action and tab-scoped exploration recovery | Assigned follow-up; completion follows verification and merge into `main` |
 
 ## Interface handoffs
 
