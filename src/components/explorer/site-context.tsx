@@ -1,6 +1,6 @@
 ﻿/**
- * Inspect map locations and collect candidates without claiming scientific analysis.
- * Mission times are explicit UTC inputs; ephemeris and terrain results await integration.
+ * Inspect map locations, collect candidates and compose explicit mission-analysis controls.
+ * Map inputs remain separate from the adopted scientific observer scenario.
  * @author Sultan
  */
 "use client";

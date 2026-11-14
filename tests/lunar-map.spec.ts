@@ -70,7 +70,8 @@ test("manual coordinates select a site, center the map and use lunar distances",
   await goTo(page, "-85.81", "-3.6");
   await expectLocation(page, "-85.8100", "-3.6000");
   await expect(page.getByRole("button", { name: "South pole", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Analysis not connected.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Mission analysis", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Analyze", exact: true })).toBeDisabled();
   const scale = page.locator(".ol-scale-line-inner");
   await expect(scale).toBeVisible();
   const text = await scale.innerText();

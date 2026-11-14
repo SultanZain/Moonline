@@ -83,7 +83,7 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | comparison-preview | Sultan | Explicitly illustrative radar comparison, keyboard controls and textual values | Done; synthetic UI preview merged in [PR #4](https://github.com/SultanZain/Moonline/pull/4); scientific integration remains separate |
 | p2-map-imagery | Sultan | Map-first Explorer, NASA basemaps/overlays, search, map-coordinate selection, fullscreen and candidate export | Done; merged in [PR #9](https://github.com/SultanZain/Moonline/pull/9); scientific observer inputs remain separate |
 | p2-session | Sultan | Reopenable exploration links, candidate-file imports and preserved map/site/time state | Done; merged in [PR #10](https://github.com/SultanZain/Moonline/pull/10); independent of the scientific observer contract |
-| p2-shortlist | Sultan | Fit saved sites on the map, preserve selected pin numbers, clear/undo candidates and maintain keyboard focus | Verified locally on `sultan/p2-shortlist-candidate-controls`; 66 tests and live NASA desktop/mobile review passed |
+| p2-shortlist | Sultan | Fit saved sites on the map, preserve selected pin numbers, clear/undo candidates and maintain keyboard focus | Included in mission-workflow delivery; previously verified on `sultan/p2-shortlist-candidate-controls` |
 | p2-coordinates | Rameen | Define verified scientific observer-coordinate conventions and exported runtime validation | Changes requested in [PR #11](https://github.com/SultanZain/Moonline/pull/11); source evidence and a complete observer contract remain required |
 | p2-explorer | Sultan | Connect selected map locations and candidate sites to the verified scientific observer contract | Wait for p2-coordinates; map navigation and candidate collection are delivered by p2-map-imagery |
 | p3-positions | Rameen | Verify Horizons lunar observer configuration; retrieve and normalize Sun/Earth positions with provenance and scientific tests | Wait for Phase 2 completion |
@@ -94,7 +94,7 @@ Sultan maintains this ledger. Rameen reports progress and dependencies in her PR
 | p5-comparison-ui | Sultan | Candidate comparison flow, charts and incomplete-data handling | Wait for p5-comparison-science |
 | terrain-data | Rameen | DEM collection/processing and terrain-adjusted visibility with documented resolution and verified horizon methods | Deferred until the core 2D workflow works and a suitable dataset is verified |
 | visualization-3d | Sultan | Optional 3D visualization of verified lunar data | Deferred until the core 2D workflow works |
-| mission-workflow | Sultan | Deliver integrated live Sun/Earth geometry, sampled visibility, comparison and reports | Assigned on `sultan/mission-workflow-local-analysis`; uses explicit mean-Earth inputs and the branch-scoped file policy above |
+| mission-workflow | Sultan | Deliver integrated live Sun/Earth geometry, sampled visibility, comparison and reports | Implemented on `sultan/mission-workflow-local-analysis`; completion follows passing verification and merge into `main`. Uses explicit mean-Earth inputs and the branch-scoped file policy above |
 
 ## Interface handoffs
 
