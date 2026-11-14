@@ -368,18 +368,52 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
     });
   });
 
+   /* ------------------------------------------------------------------------ */
+  /* 5. Longitude Normalization & Boundary Checks                             */
   /* ------------------------------------------------------------------------ */
-  /* 5. Longitude Normalization [-180.0, +180.0)                               */
-  /* ------------------------------------------------------------------------ */
-  test.describe('5. Canonical Longitude Normalization', () => {
-    test('normalizes boundaries into half-open interval [-180.0, +180.0)', () => {
+  test.describe('5. Canonical Longitude Normalization & Endpoints', () => {
+    test('normalizes supported endpoints into half-open interval [-180.0, +180.0)', () => {
       expect(normalizeLongitude180(-180.0)).toBe(-180.0);
-      expect(normalizeLongitude180(180.0)).toBe(-180.0); // +180 wraps to -180
+      expect(normalizeLongitude180(180.0)).toBe(-180.0); // +180 maps to -180
       expect(normalizeLongitude180(0.0)).toBe(0.0);
-      expect(normalizeLongitude180(360.0)).toBe(0.0);
-      expect(normalizeLongitude180(540.0)).toBe(-180.0);
-      expect(normalizeLongitude180(-190.0)).toBe(170.0);
+      expect(normalizeLongitude180(360.0)).toBe(0.0); // 360 maps to 0
+      expect(normalizeLongitude180(270.0)).toBe(-90.0); // unsigned 270 maps to -90
       expect(normalizeLongitude180(190.0)).toBe(-170.0);
+    });
+
+    test('rejects longitudes outside supported input ranges [-180, +180] and [0, 360]', () => {
+      const outOfBoundsLons = [-180.0001, -190.0, -360.0, 360.0001, 540.0];
+      for (const lon of outOfBoundsLons) {
+        expect(Number.isNaN(normalizeLongitude180(lon))).toBe(true);
+
+        const result = validateLunarObserver({
+          latitudeDeg: 0,
+          longitudeDeg: lon,
+          heightMeters: 0,
+          heightDatum: 'reference_sphere',
+          heightInterpretation: 'reference_surface_zero',
+        });
+        expect(result.success).toBe(false);
+        expect(result.status).toBe('rejected');
+        if (result.status === 'rejected') {
+          expect(result.errors.some(e => e.code === 'LONGITUDE_OUT_OF_BOUNDS')).toBe(true);
+        }
+      }
+    });
+
+    test('accepts signed +180° input and normalizes it to canonical -180° in complete observer', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: 0,
+        longitudeDeg: 180.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('complete');
+      if (result.status === 'complete') {
+        expect(result.observer.longitudeDeg).toBe(-180.0);
+      }
     });
   });
 
