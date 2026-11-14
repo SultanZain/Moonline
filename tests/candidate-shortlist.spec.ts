@@ -178,6 +178,38 @@ test("new candidate edits and confirmed imports invalidate an older clear undo",
   await expect(page.locator("#mission-time")).toHaveValue("2026-11-15T09:10");
 });
 
+for (const width of [390, 1440]) {
+  test(`shortlist comparison preserves candidates through refresh and map return at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/explorer"); await importSites(page, polarSites.slice(0, 1));
+    await expect(inspector(page).getByRole("link", { name: "Compare candidates", exact: true })).toHaveCount(0);
+    await importSites(page, polarSites.slice(0, 2));
+    const before = session(page); if (!before) throw new Error("Missing candidate comparison inputs.");
+    const link = inspector(page).getByRole("link", { name: "Compare candidates", exact: true });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", /^\/comparison\?session=/);
+    await link.focus(); await link.press("Enter");
+    await expect(page).toHaveURL(/\/comparison\?/);
+    const comparisonSites = page.getByRole("region", { name: "Comparison sites", exact: true });
+    await expect(comparisonSites.getByRole("listitem")).toHaveCount(2);
+    await expect(comparisonSites).toContainText("Malapert Massif");
+    await expect(comparisonSites).toContainText("Shackleton");
+    await expect(page.locator("#mission-time")).toHaveValue(missionTimeUtc.slice(0, 16));
+    await page.reload();
+    await expect(comparisonSites.getByRole("listitem")).toHaveCount(2);
+    await expect(page.locator("#mission-time")).toHaveValue(missionTimeUtc.slice(0, 16));
+    await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+    await expect(page).toHaveURL(/\/explorer\?/);
+    await expect(shortlist(page).getByRole("listitem")).toHaveCount(2);
+    await expect.poll(() => session(page)?.sites).toEqual(before.sites);
+    expect(session(page)?.selected).toEqual(before.selected);
+    expect(session(page)?.missionTimeUtc).toBe(before.missionTimeUtc);
+    expect(session(page)?.view).toEqual(before.view);
+    await expect(inspector(page).getByRole("link", { name: "Compare candidates", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
+
 test("mobile fullscreen exposes fit and undo without trapping the user or overlapping map controls", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => false }));

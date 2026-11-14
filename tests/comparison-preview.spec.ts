@@ -32,8 +32,8 @@ async function configure(page: Page) {
   await analysis(page).getByRole("checkbox", { name: /Adopt mean-Earth coordinates/ }).check();
 }
 
-async function compare(page: Page) {
-  await analysis(page).getByRole("button", { name: "Compare 2", exact: true }).click();
+async function compare(page: Page, count = 2) {
+  await analysis(page).getByRole("button", { name: `Compare ${count}`, exact: true }).click();
   await expect(timeline(page).getByRole("slider", { name: "Analysis time", exact: true })).toBeVisible();
   await expect(timeline(page).locator(".mission-elevation-chart svg")).toBeVisible();
 }
@@ -58,7 +58,7 @@ test("Explorer navigation opens an empty comparison without example results or a
   await page.goto("/explorer");
   await expect(page.locator(".ol-viewport")).toHaveCount(1);
   await page.getByRole("link", { name: "Site comparison", exact: true }).click();
-  await expect(page).toHaveURL(/\/comparison-preview(?:\?|$)/);
+  await expect(page).toHaveURL(/\/comparison(?:\?|$)/);
   await expect(page.getByRole("link", { name: "Site comparison", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Site comparison", exact: true })).toBeVisible();
   await expect(shortlist(page).getByRole("listitem")).toHaveCount(0);
@@ -76,7 +76,7 @@ test("Explorer navigation opens an empty comparison without example results or a
 
 test("two entered sites require explicit observer choices and share UTC settings, samples and reports", async ({ page }) => {
   const requests = await mockMissionAnalysis(page);
-  await page.goto("/comparison-preview");
+  await page.goto("/comparison");
   await addSite(page, sites[0]!);
   await expect(analysis(page).getByRole("button", { name: "Compare sites", exact: true })).toBeDisabled();
   await addSite(page, sites[1]!);
@@ -130,7 +130,7 @@ test("failed sites remain explicit in results and reports, and removal invalidat
     });
     else await fulfillSyntheticMission(route, input);
   });
-  await page.goto("/comparison-preview");
+  await page.goto("/comparison");
   await addSite(page, sites[0]!); await addSite(page, sites[1]!); await configure(page); await compare(page);
   await expect(analysis(page).getByRole("region", { name: "Unavailable sites", exact: true })).toContainText(sites[1]!.name);
   await expect(values(page).getByRole("listitem").filter({ hasText: sites[1]!.name })).toContainText("Unavailable");
@@ -191,13 +191,57 @@ test("Explorer selection, candidates, UTC and map settings travel to comparison 
   expect(requests).toHaveLength(0);
 });
 
+test("legacy comparison links redirect to the canonical page with their entered inputs", async ({ page }) => {
+  const requests = await mockMissionAnalysis(page);
+  const session = { ...emptyExplorerSession(), selected: sites[1]!, sites: sites.slice(0, 2), missionTimeUtc: utc };
+  const legacy = new URL(explorerSessionLink(session, "https://moonline.example/comparison-preview?source=saved-link"));
+  await page.goto(legacy.pathname + legacy.search);
+  await expect(page).toHaveURL(/\/comparison\?/);
+  expect(new URL(page.url()).searchParams.get("source")).toBe("saved-link");
+  await expect(page.getByRole("link", { name: "Site comparison", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(shortlist(page).getByRole("listitem")).toHaveCount(2);
+  await expect(shortlist(page).getByRole("button", { name: `Select site 2: ${sites[1]!.name}`, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#mission-time")).toHaveValue(utc.slice(0, 16));
+  const restored = readExplorerSession(new URL(page.url()).search);
+  expect(restored.status).toBe("ready");
+  if (restored.status !== "ready") throw new Error("Legacy comparison link lost its session.");
+  expect(restored.session).toEqual(session);
+  expect(requests).toHaveLength(0);
+});
+
+test("comparison edits survive a Methodology return while calculated results remain transient", async ({ page }) => {
+  await mockMoonTrekTiles(page);
+  await mockMissionAnalysis(page);
+  await page.goto("/comparison");
+  await addSite(page, sites[0]!); await addSite(page, sites[1]!);
+  await addSite(page, sites[2]!);
+  await configure(page);
+  await page.locator("#mission-time").fill("2026-11-15T09:10");
+  await compare(page, 3);
+  await page.getByRole("link", { name: "Methodology", exact: true }).click();
+  await expect(page).toHaveURL(/\/methodology$/);
+  await page.getByRole("link", { name: "Back to Explorer", exact: true }).click();
+  await expect(page).toHaveURL(/\/explorer(?:\?|$)/);
+  await expect(page.getByRole("region", { name: "Candidate locations", exact: true }).getByRole("listitem")).toHaveCount(3);
+  await expect(page.locator("#mission-time")).toHaveValue("2026-11-15T09:10");
+  await expect.poll(() => readExplorerSession(new URL(page.url()).search).status).toBe("ready");
+  const restored = readExplorerSession(new URL(page.url()).search);
+  expect(restored.status).toBe("ready");
+  if (restored.status !== "ready") throw new Error("Comparison edits were not restored in Explorer.");
+  expect(restored.session.sites).toEqual(sites);
+  expect(restored.session.selected).toEqual(sites[2]);
+  expect(restored.session.missionTimeUtc).toBe("2026-11-15T09:10:00.000Z");
+  await expect(page.getByRole("region", { name: "Analysis results", exact: true })).toHaveCount(0);
+  await expect(timeline(page)).toHaveCount(0);
+});
+
 for (const width of [390, 768, 1440]) {
   test(`empty and completed comparison remain usable at ${width}px`, async ({ page }, testInfo) => {
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.setViewportSize({ width, height: 900 });
     await mockMissionAnalysis(page);
-    await page.goto("/comparison-preview");
+    await page.goto("/comparison");
     await expect(page.getByRole("heading", { name: "Site comparison", exact: true })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
