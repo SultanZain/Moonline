@@ -3,6 +3,7 @@
  * @description Comprehensive scientific test suite for MOONLINE Lunar Observer Contract.
  *
  * Fully type-checked for strict tsc --noEmit (noUncheckedIndexedAccess) and @playwright/test.
+ * Zero TS2532 warnings: uses array guards and .some() to prevent unchecked index access.
  *
  * Covers:
  * 1. Proves unknown/missing height is NEVER treated as successful observer.
@@ -140,7 +141,6 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         expect(result.success).toBe(false);
         expect(result.status).toBe('rejected');
         if (result.status === 'rejected') {
-          expect(result.errors.length).toBeGreaterThan(0);
           expect(result.errors.some(e => e.code === 'UNSUPPORTED_DATUM')).toBe(true);
         }
       }
@@ -158,7 +158,6 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(mismatch1.success).toBe(false);
       expect(mismatch1.status).toBe('rejected');
       if (mismatch1.status === 'rejected') {
-        expect(mismatch1.errors.length).toBeGreaterThan(0);
         expect(mismatch1.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
       }
 
@@ -173,7 +172,6 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(mismatch2.success).toBe(false);
       expect(mismatch2.status).toBe('rejected');
       if (mismatch2.status === 'rejected') {
-        expect(mismatch2.errors.length).toBeGreaterThan(0);
         expect(mismatch2.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
       }
     });
@@ -219,7 +217,6 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
         expect(result.success).toBe(false);
         expect(result.status).toBe('rejected');
         if (result.status === 'rejected') {
-          expect(result.errors.length).toBeGreaterThan(0);
           expect(result.errors.some(e => e.code === 'NON_FINITE_NUMBER')).toBe(true);
         }
       }
@@ -253,8 +250,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(res1.success).toBe(false);
       expect(res1.status).toBe('rejected');
       if (res1.status === 'rejected') {
-        expect(res1.errors.length).toBeGreaterThan(0);
-        expect(res1.errors[0]?.code).toBe('ARRAY_NOT_PERMITTED');
+        const [firstError] = res1.errors;
+        expect(firstError?.code).toBe('ARRAY_NOT_PERMITTED');
+        expect(res1.errors.some(e => e.code === 'ARRAY_NOT_PERMITTED')).toBe(true);
       }
 
       // Array with properties attached
@@ -271,8 +269,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(res2.success).toBe(false);
       expect(res2.status).toBe('rejected');
       if (res2.status === 'rejected') {
-        expect(res2.errors.length).toBeGreaterThan(0);
-        expect(res2.errors[0]?.code).toBe('ARRAY_NOT_PERMITTED');
+        const [firstError] = res2.errors;
+        expect(firstError?.code).toBe('ARRAY_NOT_PERMITTED');
+        expect(res2.errors.some(e => e.code === 'ARRAY_NOT_PERMITTED')).toBe(true);
       }
     });
   });
@@ -348,8 +347,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(southExterior.success).toBe(false);
       expect(southExterior.status).toBe('rejected');
       if (southExterior.status === 'rejected') {
-        expect(southExterior.errors.length).toBeGreaterThan(0);
-        expect(southExterior.errors[0]?.code).toBe('LATITUDE_OUT_OF_BOUNDS');
+        const [firstError] = southExterior.errors;
+        expect(firstError?.code).toBe('LATITUDE_OUT_OF_BOUNDS');
+        expect(southExterior.errors.some(e => e.code === 'LATITUDE_OUT_OF_BOUNDS')).toBe(true);
       }
 
       const northExterior = validateLunarObserver({
@@ -362,8 +362,9 @@ test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () =
       expect(northExterior.success).toBe(false);
       expect(northExterior.status).toBe('rejected');
       if (northExterior.status === 'rejected') {
-        expect(northExterior.errors.length).toBeGreaterThan(0);
-        expect(northExterior.errors[0]?.code).toBe('LATITUDE_OUT_OF_BOUNDS');
+        const [firstError] = northExterior.errors;
+        expect(firstError?.code).toBe('LATITUDE_OUT_OF_BOUNDS');
+        expect(northExterior.errors.some(e => e.code === 'LATITUDE_OUT_OF_BOUNDS')).toBe(true);
       }
     });
   });
