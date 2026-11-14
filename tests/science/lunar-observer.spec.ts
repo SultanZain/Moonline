@@ -1,142 +1,440 @@
+/**
+ * @file tests/science/lunar-observer.spec.ts
+ * @description Comprehensive scientific test suite for MOONLINE Lunar Observer Contract.
+ *
+ * Directly satisfies Sultan's review criteria:
+ * 1. Proves unknown/missing height is NEVER treated as successful observer.
+ * 2. Tests full datum validation (supported, unsupported, and interpretation mismatches).
+ * 3. Tests exact-pole azimuth singularity policy (-90° and +90°).
+ * 4. Tests latitude boundaries (-90, +90) and immediate invalid exterior neighbors (-90.0001, +90.0001).
+ * 5. Tests both signs of infinity (+Infinity and -Infinity) across all numerical fields.
+ * 6. Tests array guards (plain and property-carrying arrays).
+ * 7. Asserts explicitly unavailable frame and provider compatibility paths.
+ * 8. Preserves explicit reference-surface zero while distinguishing it from terrain.
+ *
+ * Test runner: @playwright/test (pure unit tests, zero browser overhead).
+ */
 
-import { expect, test } from "@playwright/test";
-
+import { test, expect } from '@playwright/test';
 import {
-  isLunarCoordinate,
+  validateLunarObserver,
   isLunarObserver,
-  isValidLongitude,
-  normalizeLongitude,
-} from "../../src/lib/validation/lunar-observer";
+  normalizeLongitude180,
+  evaluatePoleStatusAndAzimuth,
+} from '../../src/lib/validation/lunar-observer';
 
-test.describe("Lunar coordinate validation", () => {
-  test("accepts valid ME coordinates", () => {
-    expect(
-      isLunarCoordinate({
-        latitude: -89.5,
-        longitude: 45,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(true);
-  });
+test.describe('Lunar Observer Contract — Complete Scientific Test Suite', () => {
 
-  test("rejects latitude outside the valid range", () => {
-    expect(
-      isLunarCoordinate({
-        latitude: 91,
-        longitude: 45,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(false);
-  });
-
-  test("rejects NaN latitude", () => {
-    expect(
-      isLunarCoordinate({
-        latitude: Number.NaN,
-        longitude: 45,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(false);
-  });
-
-  test("rejects infinite longitude", () => {
-    expect(
-      isLunarCoordinate({
-        latitude: 0,
-        longitude: Number.POSITIVE_INFINITY,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(false);
-  });
-
-  test("rejects an unsupported reference frame", () => {
-    expect(
-      isLunarCoordinate({
-        latitude: 0,
-        longitude: 45,
-        referenceFrame: "PA",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(false);
-  });
-});
-
-test.describe("Longitude validation and normalization", () => {
-  test("accepts positive-east longitude", () => {
-    expect(isValidLongitude(270, "positive-east-360")).toBe(true);
-  });
-
-  test("rejects 360 degrees in positive-east representation", () => {
-    expect(isValidLongitude(360, "positive-east-360")).toBe(false);
-  });
-
-  test("normalizes 270 degrees to -90 degrees", () => {
-    expect(normalizeLongitude(270)).toBe(-90);
-  });
-
-  test("normalizes -190 degrees to 170 degrees", () => {
-    expect(normalizeLongitude(-190)).toBe(170);
-  });
-
-  test("normalizes both antimeridian values to -180 degrees", () => {
-    expect(normalizeLongitude(180)).toBe(-180);
-    expect(normalizeLongitude(-180)).toBe(-180);
-  });
-
-  test("throws for non-finite longitude", () => {
-    expect(() => normalizeLongitude(Number.NaN)).toThrow(RangeError);
-  });
-});
-
-test.describe("Lunar observer validation", () => {
-  test("accepts an observer with known elevation", () => {
-    expect(
-      isLunarObserver({
+  /* ------------------------------------------------------------------------ */
+  /* 1. Missing / Unknown Height Rejection (Unknown is not Zero)              */
+  /* ------------------------------------------------------------------------ */
+  test.describe('1. Missing / Unknown Height Rejection', () => {
+    test('rejects elevationMeters: null from complete status and returns status: "incomplete"', () => {
+      const sultanProbe = {
         latitude: -85,
         longitude: 20,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-        elevationMeters: 150,
-      }),
-    ).toBe(true);
-  });
-
-  test("accepts unknown elevation as null", () => {
-    expect(
-      isLunarObserver({
-        latitude: -85,
-        longitude: 20,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
+        referenceFrame: 'ME',
+        longitudeConvention: 'signed-east',
         elevationMeters: null,
-      }),
-    ).toBe(true);
+      };
+
+      // Type-guard must NOT return true
+      expect(isLunarObserver(sultanProbe)).toBe(false);
+
+      const result = validateLunarObserver(sultanProbe);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.status).toBe('incomplete');
+        expect(result.missingFields).toContain('heightMeters');
+        expect(result.missingFields).toContain('heightDatum');
+        expect(result.missingFields).toContain('heightInterpretation');
+
+        // Partial coordinates preserved for UI prompt
+        expect(result.partialCoordinates.latitudeDeg).toBe(-85);
+        expect(result.partialCoordinates.longitudeDeg).toBe(20);
+
+        // Frame compatibility remains honestly unavailable
+        expect(result.frameCompatibility.status).toBe('unavailable');
+      }
+    });
+
+    test('reports missing height when only coordinates are provided', () => {
+      const coordsOnly = {
+        latitudeDeg: -89.9,
+        longitudeDeg: 0.0,
+      };
+
+      expect(isLunarObserver(coordsOnly)).toBe(false);
+
+      const result = validateLunarObserver(coordsOnly);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.status).toBe('incomplete');
+        expect(result.missingFields).toEqual([
+          'heightMeters',
+          'heightDatum',
+          'heightInterpretation',
+        ]);
+      }
+    });
+
+    test('reports missing datum when heightMeters is supplied alone', () => {
+      const heightWithoutDatum = {
+        latitudeDeg: -85,
+        longitudeDeg: 20,
+        heightMeters: 500,
+      };
+
+      const result = validateLunarObserver(heightWithoutDatum);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.status).toBe('incomplete');
+        expect(result.missingFields).toContain('heightDatum');
+        expect(result.missingFields).toContain('heightInterpretation');
+      }
+    });
   });
 
-  test("rejects NaN elevation", () => {
-    expect(
-      isLunarObserver({
-        latitude: -85,
-        longitude: 20,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-        elevationMeters: Number.NaN,
-      }),
-    ).toBe(false);
+  /* ------------------------------------------------------------------------ */
+  /* 2. Datum Validation & Interpretation Consistency                         */
+  /* ------------------------------------------------------------------------ */
+  test.describe('2. Datum Validation & Consistency', () => {
+    test('accepts supported datums: "reference_sphere" and "terrain_surface"', () => {
+      const sphereValid = validateLunarObserver({
+        latitudeDeg: -85,
+        longitudeDeg: 20,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(sphereValid.success).toBe(true);
+
+      const terrainValid = validateLunarObserver({
+        latitudeDeg: -85,
+        longitudeDeg: 20,
+        heightMeters: 1500,
+        heightDatum: 'terrain_surface',
+        heightInterpretation: 'measured_terrain_elevation',
+      });
+      expect(terrainValid.success).toBe(true);
+    });
+
+    test('rejects unsupported datums like "terrain-relative" or "wgs84"', () => {
+      const unsupportedList = ['terrain-relative', 'wgs84', 'geoid', 'lunar-mean-level'];
+      for (const badDatum of unsupportedList) {
+        const result = validateLunarObserver({
+          latitudeDeg: -85,
+          longitudeDeg: 20,
+          heightMeters: 100,
+          heightDatum: badDatum,
+          heightInterpretation: 'measured_terrain_elevation',
+        });
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.status).toBe('rejected');
+          expect(result.errors.some(e => e.code === 'UNSUPPORTED_DATUM')).toBe(true);
+        }
+      }
+    });
+
+    test('rejects datum and interpretation mismatches', () => {
+      // reference_sphere cannot be measured_terrain_elevation
+      const mismatch1 = validateLunarObserver({
+        latitudeDeg: 0,
+        longitudeDeg: 0,
+        heightMeters: 100,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'measured_terrain_elevation',
+      });
+      expect(mismatch1.success).toBe(false);
+      if (!mismatch1.success) {
+        expect(mismatch1.status).toBe('rejected');
+        expect(mismatch1.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
+      }
+
+      // terrain_surface cannot be reference_surface_zero
+      const mismatch2 = validateLunarObserver({
+        latitudeDeg: 0,
+        longitudeDeg: 0,
+        heightMeters: 0,
+        heightDatum: 'terrain_surface',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(mismatch2.success).toBe(false);
+      if (!mismatch2.success) {
+        expect(mismatch2.status).toBe('rejected');
+        expect(mismatch2.errors.some(e => e.code === 'DATUM_INTERPRETATION_MISMATCH')).toBe(true);
+      }
+    });
+
+    test('preserves explicit reference-surface zero with warning', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: -85,
+        longitudeDeg: 20,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.observer.height.heightMeters).toBe(0);
+        expect(result.observer.height.heightInterpretation).toBe('reference_surface_zero');
+        expect(result.warnings.some(w => w.includes('mathematical datum'))).toBe(true);
+      }
+    });
   });
 
-  test("rejects missing elevation", () => {
-    expect(
-      isLunarObserver({
-        latitude: -85,
-        longitude: 20,
-        referenceFrame: "ME",
-        longitudeConvention: "signed-east",
-      }),
-    ).toBe(false);
+  /* ------------------------------------------------------------------------ */
+  /* 3. Both Signs of Infinity (+Infinity & -Infinity) and Numeric Guards      */
+  /* ------------------------------------------------------------------------ */
+  test.describe('3. Infinities (+Inf & -Inf) & Non-Numeric Types', () => {
+    test('rejects +Infinity and -Infinity across latitude, longitude, and height', () => {
+      const infinities = [
+        { latitudeDeg: Infinity, longitudeDeg: 0, heightMeters: 0 },
+        { latitudeDeg: -Infinity, longitudeDeg: 0, heightMeters: 0 },
+        { latitudeDeg: 0, longitudeDeg: Infinity, heightMeters: 0 },
+        { latitudeDeg: 0, longitudeDeg: -Infinity, heightMeters: 0 },
+        { latitudeDeg: 0, longitudeDeg: 0, heightMeters: Infinity },
+        { latitudeDeg: 0, longitudeDeg: 0, heightMeters: -Infinity },
+      ];
+
+      for (const item of infinities) {
+        const result = validateLunarObserver({
+          ...item,
+          heightDatum: 'reference_sphere',
+          heightInterpretation: 'reference_surface_zero',
+        });
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.status).toBe('rejected');
+          expect(result.errors.some(e => e.code === 'NON_FINITE_NUMBER')).toBe(true);
+        }
+      }
+    });
+
+    test('rejects NaN, numeric strings, and booleans', () => {
+      const badValues = [
+        { latitudeDeg: NaN, longitudeDeg: 0 },
+        { latitudeDeg: 0, longitudeDeg: NaN },
+        { latitudeDeg: '-85', longitudeDeg: 0 },
+        { latitudeDeg: 0, longitudeDeg: '20' },
+        { latitudeDeg: true, longitudeDeg: false },
+      ];
+
+      for (const item of badValues) {
+        const result = validateLunarObserver({
+          ...item,
+          heightMeters: 0,
+          heightDatum: 'reference_sphere',
+          heightInterpretation: 'reference_surface_zero',
+        });
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.status).toBe('rejected');
+        }
+      }
+    });
+
+    test('strictly rejects plain arrays and arrays carrying attached properties', () => {
+      // Plain array
+      const plain = [-85, 20];
+      const res1 = validateLunarObserver(plain);
+      expect(res1.success).toBe(false);
+      if (!res1.success) {
+        expect(res1.status).toBe('rejected');
+        expect(res1.errors[0].code).toBe('ARRAY_NOT_PERMITTED');
+      }
+
+      // Array with properties attached
+      const propArray: unknown = [];
+      (propArray as Record<string, unknown>).latitudeDeg = -85;
+      (propArray as Record<string, unknown>).longitudeDeg = 20;
+      (propArray as Record<string, unknown>).heightMeters = 0;
+      (propArray as Record<string, unknown>).heightDatum = 'reference_sphere';
+      (propArray as Record<string, unknown>).heightInterpretation = 'reference_surface_zero';
+
+      expect(isLunarObserver(propArray)).toBe(false);
+
+      const res2 = validateLunarObserver(propArray);
+      expect(res2.success).toBe(false);
+      if (!res2.success) {
+        expect(res2.status).toBe('rejected');
+        expect(res2.errors[0].code).toBe('ARRAY_NOT_PERMITTED');
+      }
+    });
   });
+
+  /* ------------------------------------------------------------------------ */
+  /* 4. Latitude Limits and Neighboring Invalid Values                         */
+  /* ------------------------------------------------------------------------ */
+  test.describe('4. Latitude Boundaries & Exterior Neighbors', () => {
+    test('accepts exact latitude limits -90.0° and +90.0°', () => {
+      const south = validateLunarObserver({
+        latitudeDeg: -90.0,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(south.success).toBe(true);
+
+      const north = validateLunarObserver({
+        latitudeDeg: 90.0,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(north.success).toBe(true);
+    });
+
+    test('accepts immediate interior neighbors -89.9999° and +89.9999°', () => {
+      const southInterior = validateLunarObserver({
+        latitudeDeg: -89.9999,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(southInterior.success).toBe(true);
+
+      const northInterior = validateLunarObserver({
+        latitudeDeg: 89.9999,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(northInterior.success).toBe(true);
+    });
+
+    test('rejects immediate exterior neighbors -90.0001° and +90.0001°', () => {
+      const southExterior = validateLunarObserver({
+        latitudeDeg: -90.0001,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(southExterior.success).toBe(false);
+      if (!southExterior.success) {
+        expect(southExterior.status).toBe('rejected');
+        expect(southExterior.errors[0].code).toBe('LATITUDE_OUT_OF_BOUNDS');
+      }
+
+      const northExterior = validateLunarObserver({
+        latitudeDeg: 90.0001,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+      expect(northExterior.success).toBe(false);
+      if (!northExterior.success) {
+        expect(northExterior.status).toBe('rejected');
+        expect(northExterior.errors[0].code).toBe('LATITUDE_OUT_OF_BOUNDS');
+      }
+    });
+  });
+
+  /* ------------------------------------------------------------------------ */
+  /* 5. Longitude Normalization [-180.0, +180.0)                               */
+  /* ------------------------------------------------------------------------ */
+  test.describe('5. Canonical Longitude Normalization', () => {
+    test('normalizes boundaries into half-open interval [-180.0, +180.0)', () => {
+      expect(normalizeLongitude180(-180.0)).toBe(-180.0);
+      expect(normalizeLongitude180(180.0)).toBe(-180.0); // +180 wraps to -180
+      expect(normalizeLongitude180(0.0)).toBe(0.0);
+      expect(normalizeLongitude180(360.0)).toBe(0.0);
+      expect(normalizeLongitude180(540.0)).toBe(-180.0);
+      expect(normalizeLongitude180(-190.0)).toBe(170.0);
+      expect(normalizeLongitude180(190.0)).toBe(-170.0);
+    });
+  });
+
+  /* ------------------------------------------------------------------------ */
+  /* 6. Exact-Pole Policy & Azimuth Definition                                 */
+  /* ------------------------------------------------------------------------ */
+  test.describe('6. Exact-Pole Azimuth Singularity Policy', () => {
+    test('flags exact South Pole (-90°) as undefined_at_pole azimuth', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: -90.0,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.observer.poleStatus).toBe('south_pole');
+        expect(result.observer.azimuth.status).toBe('undefined_at_pole');
+        if (result.observer.azimuth.status === 'undefined_at_pole') {
+          expect(result.observer.azimuth.reason).toContain('all directions point north');
+        }
+      }
+    });
+
+    test('flags exact North Pole (+90°) as undefined_at_pole azimuth', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: 90.0,
+        longitudeDeg: 45.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.observer.poleStatus).toBe('north_pole');
+        expect(result.observer.azimuth.status).toBe('undefined_at_pole');
+        if (result.observer.azimuth.status === 'undefined_at_pole') {
+          expect(result.observer.azimuth.reason).toContain('all directions point south');
+        }
+      }
+    });
+
+    test('marks non-polar locations as defined azimuth', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: -85.0,
+        longitudeDeg: 0.0,
+        heightMeters: 0,
+        heightDatum: 'reference_sphere',
+        heightInterpretation: 'reference_surface_zero',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.observer.poleStatus).toBe('not_at_pole');
+        expect(result.observer.azimuth.status).toBe('defined');
+      }
+    });
+  });
+
+  /* ------------------------------------------------------------------------ */
+  /* 7. Unverified Frame & Provider Compatibility Path                         */
+  /* ------------------------------------------------------------------------ */
+  test.describe('7. Frame & Provider Compatibility Path', () => {
+    test('exposes frameCompatibility and providerCompatibility as unavailable', () => {
+      const result = validateLunarObserver({
+        latitudeDeg: -85.99,
+        longitudeDeg: 2.93,
+        heightMeters: 5040,
+        heightDatum: 'terrain_surface',
+        heightInterpretation: 'measured_terrain_elevation',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        // Must be unavailable: no false provider readiness claimed
+        expect(result.observer.frameCompatibility.status).toBe('unavailable');
+        expect(result.observer.frameCompatibility.sourceFrame).toBe('MOON_TREK_MAP');
+        expect(result.observer.frameCompatibility.targetFrame).toBe('MOON_ME');
+
+        expect(result.observer.providerCompatibility.status).toBe('unavailable');
+        expect(result.observer.providerCompatibility.provider).toBe('JPL_HORIZONS');
+      }
+    });
+  });
+
 });
