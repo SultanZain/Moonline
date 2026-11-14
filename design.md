@@ -169,6 +169,8 @@ Selecting a map location or search result opens a dismissible, nonmodal desktop 
 
 The inspector provides candidate import/export and a copyable exploration link. Imports show coordinates and UTC time in a compact preview before replacing existing inputs; cancellation preserves the workspace, and Back restores the previous confirmed import. Copy failures reveal a selectable link. Shared links and reloads restore selection, candidates, time, camera and layers, while invalid shared state opens the default map with a dismissible error. Transfer controls also remain accessible in the mobile fullscreen sheet.
 
+The shortlist precedes transfer actions. Its active row and numbered map pin use the selected-site accent. “Add candidate” appears for unsaved locations while a slot is available; adding moves focus to the saved row. “Show all” frames saved sites and closes the inspector; a fit control also appears over the map for multiple candidates. “Clear” offers an inline undo and preserves the selected location and mission time. Removal moves keyboard focus to a remaining site or the add action. Mobile controls and the site trigger remain separate when the fit control is visible.
+
 ### 7.2 Site Analysis
 
 Purpose: understand conditions at one site over a selected interval.
@@ -288,6 +290,8 @@ Charts are scientific interfaces, not decoration.
 A chart must never imply greater precision or continuity than the underlying samples support.
 
 ## 10. Scientific language in the UI
+
+Use the fewest words that remain clear. Do not repeat visible state, explain obvious controls, or add descriptions by default. Describe verified dataset limits in Methodology and source details; show a concise status where a limit affects the current map or result.
 
 Use precise labels.
 

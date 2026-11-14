@@ -110,6 +110,7 @@
   .map-start-error { position: absolute; inset: 40% 1rem auto; display: grid; justify-items: center; gap: 1rem; font-size: 0.875rem; color: var(--content-muted); }
   .map-fullscreen-error { position: absolute; bottom: 14rem; right: 1rem; padding: 0.75rem; font-size: 0.75rem; color: var(--warning); }
   .map-inspector { position: absolute; top: 5rem; right: 1rem; z-index: 15; width: 20rem; max-height: calc(100% - 19rem); padding: 1rem; overflow: auto; overscroll-behavior: contain; }
+  .lunar-map-workspace[data-candidates="multiple"] .map-inspector { max-height: calc(100% - 22rem); }
   .site-context { display: flex; flex-direction: column; gap: 1rem; }
   .site-coordinates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   .site-coordinates dt { font-size: 0.75rem; color: var(--content-muted); }
@@ -117,6 +118,7 @@
   .candidate-section { border-top: 1px solid var(--border); padding-top: 1rem; }
   .candidate-row { display: flex; align-items: center; }
   .candidate-index { display: flex; width: 1.5rem; height: 1.5rem; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid var(--content-muted); border-radius: 50%; font-size: 0.75rem; }
+  .candidate-row [aria-current="location"] .candidate-index { color: var(--accent); border-color: var(--accent); }
   .map-site-trigger { position: absolute; bottom: 2rem; left: 50%; z-index: 10; transform: translateX(-50%); max-width: calc(100% - 20rem); }
   .map-readout { position: absolute; bottom: 1rem; left: 1rem; z-index: 10; padding: 0.5rem 0.75rem; font-size: 0.75rem; line-height: 1.5; pointer-events: none; }
   .lunar-map-scale { min-height: 1.5rem; margin-block: 0.25rem; }
@@ -183,8 +185,10 @@
   .map-readout { left: 0.75rem; bottom: 0.75rem; max-width: calc(100% - 7.5rem); }
   .map-readout p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .map-viewport-controls { grid-template-columns: repeat(2, 2.75rem); right: 0.75rem; bottom: 2.25rem; }
+  .map-fit-candidates { grid-column: 1 / -1; width: 100%; }
   .map-attribution { right: 0.75rem; }
   .map-site-trigger { left: 0.75rem; bottom: 8rem; transform: none; max-width: calc(100% - 1.5rem); }
+  .lunar-map-workspace[data-candidates="multiple"] .map-site-trigger { bottom: 10.75rem; }
   .map-inspector-sheet { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
   .comparison-radar, .comparison-chart-loading { height: 320px; }
   .comparison-metric { align-items: stretch; flex-direction: column; gap: 0.25rem; }

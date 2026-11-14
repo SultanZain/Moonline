@@ -28,7 +28,7 @@ import DoubleClickZoom from "ol/interaction/DoubleClickZoom.js";
 import KeyboardPan from "ol/interaction/KeyboardPan.js";
 import KeyboardZoom from "ol/interaction/KeyboardZoom.js";
 import Kinetic from "ol/Kinetic.js";
-import { containsCoordinate, extend } from "ol/extent.js";
+import { boundingExtent, containsCoordinate, extend } from "ol/extent.js";
 import { unByKey } from "ol/Observable.js";
 import type { EventsKey } from "ol/events.js";
 import {
@@ -56,6 +56,7 @@ export type LunarMapHandle = {
   focusLayer: (id: MoonTrekOverlayId) => void;
   navigate: (location: MapLocation) => void;
   setCandidates: (locations: readonly MapLocation[]) => void;
+  fitCandidates: () => void;
   zoomBy: (delta: number) => void;
   resetView: () => void;
   retry: () => void;
@@ -298,7 +299,10 @@ export function createLunarMap(
   }
 
   function updateMarker() {
-    const coordinate = selected ? projectMapLocation(selected, mode) : null;
+    // A saved location already has a numbered pin; do not cover its number with a second marker.
+    const current = selected;
+    const saved = current && candidates.some(location => location.latitude === current.latitude && location.longitude === current.longitude);
+    const coordinate = current && !saved ? projectMapLocation(current, mode) : null;
     marker.setGeometry(coordinate ? new Point(coordinate) : undefined);
   }
 
@@ -307,10 +311,11 @@ export function createLunarMap(
     candidates.forEach((location, index) => {
       const coordinate = projectMapLocation(location, mode);
       if (!coordinate) return;
+      const color = selected?.latitude === location.latitude && selected.longitude === location.longitude ? markerColor : candidateColor;
       const feature = new Feature({ geometry: new Point(coordinate), location });
       feature.setStyle(new Style({
-        image: new CircleStyle({ radius: 12, fill: new Fill({ color: markerOutline }), stroke: new Stroke({ color: candidateColor, width: 2 }) }),
-        text: new Text({ text: String(index + 1), fill: new Fill({ color: candidateColor }), font: "500 12px DM Sans, sans-serif" }),
+        image: new CircleStyle({ radius: 12, fill: new Fill({ color: markerOutline }), stroke: new Stroke({ color, width: 2 }) }),
+        text: new Text({ text: String(index + 1), fill: new Fill({ color }), font: "500 12px DM Sans, sans-serif" }),
       }));
       candidateSource.addFeature(feature);
     });
@@ -343,12 +348,26 @@ export function createLunarMap(
   }
 
   function setLocation(location: MapLocation) {
-    selected = location; updateMarker(); onSelect(location);
+    selected = location; updateMarker(); updateCandidates(); onSelect(location);
+  }
+
+  function insideTileGrid(coordinate: [number, number] | null) {
+    if (!coordinate) return false;
+    const range = base.grid.getFullTileRange(0);
+    if (!range) return false;
+    const extent = base.grid.getTileCoordExtent([0, range.minX, range.minY]);
+    extend(extent, base.grid.getTileCoordExtent([0, range.maxX, range.maxY]));
+    return containsCoordinate(extent, coordinate);
   }
 
   const keys = [
     map.on("postrender", publish), map.on("moveend", () => { zoomTarget = undefined; publish(); }),
-    map.on("pointermove", event => { if (!event.dragging) onCursor(unprojectMapLocation(event.coordinate, mode)); }),
+    map.on("pointermove", event => {
+      if (event.dragging) return;
+      const candidate = map.forEachFeatureAtPixel(event.pixel, feature => feature.get("location"), { layerFilter: layer => layer === candidateLayer, hitTolerance: 8 });
+      element.style.cursor = isMapLocation(candidate) ? "pointer" : "";
+      onCursor(unprojectMapLocation(event.coordinate, mode));
+    }),
     map.on("singleclick", event => {
       const candidate = map.forEachFeatureAtPixel(event.pixel, feature => feature.get("location"), { layerFilter: layer => layer === candidateLayer, hitTolerance: 8 });
       const location = isMapLocation(candidate) ? candidate : unprojectMapLocation(event.coordinate, mode);
@@ -389,7 +408,25 @@ export function createLunarMap(
       restoring = false; publish();
     },
     setMode,
-    setCandidates: locations => { candidates = locations.filter(isMapLocation).slice(0, 3); updateCandidates(); },
+    setCandidates: locations => { candidates = locations.filter(isMapLocation).slice(0, 3); updateCandidates(); updateMarker(); },
+    fitCandidates: () => {
+      if (candidates.length === 0) return;
+      const size = map.getSize();
+      const width = size?.[0], height = size?.[1];
+      if (!size || width === undefined || height === undefined || width <= 0 || height <= 0) return;
+      let coordinates = candidates.map(location => projectMapLocation(location, mode));
+      // Use the published rectangular grid, including valid columns beyond its first half.
+      if (mode === "south" && coordinates.some(coordinate => !insideTileGrid(coordinate))) {
+        setMode("global");
+        coordinates = candidates.map(location => projectMapLocation(location, mode));
+      }
+      const points = coordinates.filter(coordinate => coordinate !== null);
+      if (points.length !== candidates.length) return;
+      zoomTarget = undefined; view.cancelAnimations();
+      view.fit(boundingExtent(points), { size, maxZoom: view.getMaxZoom(),
+        padding: [Math.min(width < 768 ? 160 : 100, height / 3), Math.min(64, width / 8), Math.min(112, height / 3), Math.min(64, width / 8)],
+        duration: motion.matches ? 0 : 180 });
+    },
     setBasemap: next => {
       if (next === basemap) return;
       base.abort(); basemap = next;
@@ -411,13 +448,8 @@ export function createLunarMap(
       const destination = { ...location, longitude: Math.abs(location.latitude) === 90 ? 0 : normalizeMapLongitude(location.longitude) };
       if (mode === "global" && destination.latitude <= -75) setMode("south");
       let coordinate = projectMapLocation(destination, mode);
-      if (mode === "south") {
-        const range = base.grid.getFullTileRange(0);
-        const extent = range ? base.grid.getTileCoordExtent([0, range.minX, range.minY]) : null;
-        if (extent && range) extend(extent, base.grid.getTileCoordExtent([0, range.maxX, range.maxY]));
-        if (!coordinate || !extent || !containsCoordinate(extent, coordinate)) {
-          setMode("global"); coordinate = projectMapLocation(destination, mode);
-        }
+      if (mode === "south" && !insideTileGrid(coordinate)) {
+        setMode("global"); coordinate = projectMapLocation(destination, mode);
       }
       if (!coordinate) return;
       zoomTarget = undefined; view.cancelAnimations();

@@ -8,6 +8,8 @@ Explorer occupies the available screen with global and south-polar WAC imagery, 
 
 Exploration links preserve the selected location, candidates, UTC time and view/layer settings across reloads. The inspector can load a Moonline candidate export after showing a preview; Back restores the previous exploration after a confirmed import. Files are read locally and bounded to 16 KB. Older exports remain loadable. Imported coordinates and labels are user inputs and do not constitute verified observers or scientific results.
 
+Frame the saved candidates together with Show all or the map fit control. Selected sites retain their numbered pins. Clear and Undo affect only the shortlist; selection and mission time remain. Shortlist undo lasts until another candidate edit or confirmed import and is not saved in shared links or files.
+
 Map navigation uses conversions checked against NASA's native polar nomenclature coordinates. It does not define an astronomical observer. Ephemeris retrieval, visibility timelines, scientific comparison and mission reports still require verified science contracts and calculations. Raster imagery does not supply terrain heights or show illumination at a mission date. The radar comparison remains a clearly labelled synthetic UI preview.
 
 ## Local development

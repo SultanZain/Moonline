@@ -675,6 +675,8 @@ Map-coordinate conversions and validation live in the Explorer feature. Native p
 
 `/api/lunar-locations` queries a fixed NASA nomenclature service, validates its coordinate system and payload, and returns at most eight map locations. The client debounces name searches and cancels stale responses; manually entered coordinates work independently of search availability. Selection opens a contextual inspector with an explicit UTC mission-time input and up to three candidate sites. The JSON export identifies map coordinates, selection, view settings and uncalculated analysis; it is not a mission report.
 
+Candidate fitting uses native map coordinates and the current source's published grid. It switches to the global view if a saved site cannot be projected or falls outside the polar tile grid, retaining selection, mission time and polar overlay preferences. Global fitting respects the nonwrapping raster. Saved sites keep their numbered pins when selected, and candidate removal updates the numbering. Clearing affects only the shortlist and has a transient undo until another candidate edit or confirmed import; undo is not serialized into links or files.
+
 ---
 
 ## 11. Chart Architecture
