@@ -1,18 +1,34 @@
 /** Compare user-selected lunar sites with shared live mission inputs and reports. @author Sultan */
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MissionControls } from "@/components/explorer/mission-controls";
 import { MissionTimeline } from "@/components/explorer/mission-timeline";
-import { explorerSessionLink, missionTimeToUtc, saveLastExplorerSession, type ExplorerSession } from "@/components/explorer/explorer-session";
+import { explorerSessionLink, missionTimeToUtc, readLastExplorerSession, saveLastExplorerSession, type ExplorerSession } from "@/components/explorer/explorer-session";
 import { formatMapCoordinates, isMapLocation, normalizeMapLongitude, type MapLocation } from "@/components/explorer/lunar-map-coordinates";
 import { useMissionAnalysis } from "@/hooks/use-mission-analysis";
 
-export function ComparisonWorkspace({ initialSession, initialTime, invalidSession }: { initialSession: ExplorerSession; initialTime: string; invalidSession: boolean }) {
+type ComparisonInputs = { initialSession: ExplorerSession; initialTime: string; invalidSession: boolean };
+const subscribeToHydration = () => () => {};
+const browserReady = () => true;
+const serverReady = () => false;
+
+export function ComparisonWorkspace({ initialSession, initialTime, invalidSession, restoreLast }: ComparisonInputs & { restoreLast: boolean }) {
+  const hydrated = useSyncExternalStore(subscribeToHydration, browserReady, serverReady);
+  const inputs = useMemo(() => {
+    if (!restoreLast || !hydrated) return { initialSession, initialTime };
+    const saved = readLastExplorerSession();
+    return saved.status === "ready" ? { initialSession: saved.session, initialTime: saved.session.missionTimeUtc?.slice(0, 16) ?? "" } : { initialSession, initialTime };
+  }, [restoreLast, hydrated, initialSession, initialTime]);
+  if (restoreLast && !hydrated) return <p role="status" className="text-sm text-content-muted">Opening comparison…</p>;
+  return <ComparisonContent {...inputs} invalidSession={invalidSession} />;
+}
+
+function ComparisonContent({ initialSession, initialTime, invalidSession }: ComparisonInputs) {
   const [sites, setSites] = useState(initialSession.sites);
   const [selected, setSelected] = useState(initialSession.selected ?? initialSession.sites[0] ?? null);
   const [missionTime, setMissionTime] = useState(initialTime);
@@ -28,11 +44,12 @@ export function ComparisonWorkspace({ initialSession, initialTime, invalidSessio
 
   useEffect(() => {
     if (missionTime !== "" && !missionTimeUtc) return;
+    if (invalidSession && sites.length === 0 && selected === null) return;
     const currentSession: ExplorerSession = { ...initialSession, selected, sites, missionTimeUtc };
     saveLastExplorerSession(currentSession);
     const href = explorerSessionLink(currentSession, window.location.href);
     if (href !== window.location.href) window.history.replaceState(window.history.state, "", href);
-  }, [initialSession, selected, sites, missionTime, missionTimeUtc]);
+  }, [initialSession, selected, sites, missionTime, missionTimeUtc, invalidSession]);
 
   function addSite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

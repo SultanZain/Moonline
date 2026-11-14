@@ -93,7 +93,7 @@ export function LunarMap() {
   const missionTimeUtc = missionTimeToUtc(missionTime);
   const session: ExplorerSession | null = snapshot && (!missionTime || missionTimeUtc) ?
     { version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view } : null;
-  const comparisonUrl = session ? new URL(explorerSessionLink(session, "https://moonline.invalid/comparison")) : null;
+  const comparisonUrl = snapshot ? new URL(explorerSessionLink({ version: 1, selected, sites: candidates, missionTimeUtc, view: snapshot.view }, "https://moonline.invalid/comparison")) : null;
   const comparisonHref = comparisonUrl ? comparisonUrl.pathname + comparisonUrl.search : "/comparison";
 
   function saveSessionUrl() {

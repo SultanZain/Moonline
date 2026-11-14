@@ -12,5 +12,5 @@ export default async function ComparisonPage({ searchParams }: { searchParams: P
   const read = readExplorerSession(query.toString());
   const session = read.status === "ready" ? read.session : emptyExplorerSession();
   const initialTime = read.status === "ready" ? session.missionTimeUtc?.slice(0, 16) ?? "" : new Date().toISOString().slice(0, 16);
-  return <ComparisonWorkspace initialSession={session} initialTime={initialTime} invalidSession={read.status === "invalid"} />;
+  return <ComparisonWorkspace initialSession={session} initialTime={initialTime} invalidSession={read.status === "invalid"} restoreLast={read.status === "empty"} />;
 }
