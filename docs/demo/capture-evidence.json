@@ -1,0 +1,140 @@
+{
+  "capturedUtc": "2026-11-14T16:45:23.039Z",
+  "appCommit": "ce0333dae95ce6922a4061e577a8492761639434",
+  "origin": "http://localhost:3000",
+  "scenario": {
+    "startUtc": "2026-11-14T00:00:00.000Z",
+    "days": 7,
+    "stepMinutes": 60,
+    "referenceHeightM": 0,
+    "coordinatesAdoptedAs": "Horizons mean-Earth geodetic; map-frame transformation unverified"
+  },
+  "sites": [
+    {
+      "latitude": -85.81,
+      "longitude": -3.6,
+      "targets": {
+        "sun": {
+          "status": "ready",
+          "samples": 169,
+          "visibleHours": 131.64903444444445,
+          "firstElevationDeg": -1.149859497,
+          "windows": [
+            {
+              "startUtc": "2026-11-15T12:21:03.476Z",
+              "endUtc": "2026-11-21T00:00:00.000Z",
+              "openStart": false,
+              "openEnd": true
+            }
+          ],
+          "provenance": {
+            "source": "NASA/JPL Horizons API",
+            "apiVersion": "1.2",
+            "ephemeris": "DE441",
+            "centerFrame": "MEAN_ME (high precision)",
+            "radiusKm": 1737.4,
+            "timeScale": "UTC",
+            "queryUrl": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%2710%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%27-3.6%2C-85.81%2C0%27&START_TIME=%272026-11-14+00%3A00%27&STOP_TIME=%272026-11-21+00%3A00%27&STEP_SIZE=%2760+m%27&QUANTITIES=%274%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&TIME_DIGITS=%27MINUTES%27&TIME_TYPE=%27UT%27&CAL_TYPE=%27GREGORIAN%27&APPARENT=%27AIRLESS%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27YES%27&ELEV_CUT=%27-90%27&SKIP_DAYLT=%27NO%27",
+            "retrievedUtc": "2026-11-14T16:45:18.093Z"
+          }
+        },
+        "earth": {
+          "status": "ready",
+          "samples": 169,
+          "visibleHours": 157.450455,
+          "firstElevationDeg": -0.462644045,
+          "windows": [
+            {
+              "startUtc": "2026-11-14T10:32:58.362Z",
+              "endUtc": "2026-11-21T00:00:00.000Z",
+              "openStart": false,
+              "openEnd": true
+            }
+          ],
+          "provenance": {
+            "source": "NASA/JPL Horizons API",
+            "apiVersion": "1.2",
+            "ephemeris": "DE441",
+            "centerFrame": "MEAN_ME (high precision)",
+            "radiusKm": 1737.4,
+            "timeScale": "UTC",
+            "queryUrl": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27399%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%27-3.6%2C-85.81%2C0%27&START_TIME=%272026-11-14+00%3A00%27&STOP_TIME=%272026-11-21+00%3A00%27&STEP_SIZE=%2760+m%27&QUANTITIES=%274%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&TIME_DIGITS=%27MINUTES%27&TIME_TYPE=%27UT%27&CAL_TYPE=%27GREGORIAN%27&APPARENT=%27AIRLESS%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27YES%27&ELEV_CUT=%27-90%27&SKIP_DAYLT=%27NO%27",
+            "retrievedUtc": "2026-11-14T16:45:19.274Z"
+          }
+        }
+      }
+    },
+    {
+      "latitude": -89,
+      "longitude": 90,
+      "targets": {
+        "sun": {
+          "status": "ready",
+          "samples": 169,
+          "visibleHours": 168,
+          "firstElevationDeg": 2.359142332,
+          "windows": [
+            {
+              "startUtc": "2026-11-14T00:00:00.000Z",
+              "endUtc": "2026-11-21T00:00:00.000Z",
+              "openStart": true,
+              "openEnd": true
+            }
+          ],
+          "provenance": {
+            "source": "NASA/JPL Horizons API",
+            "apiVersion": "1.2",
+            "ephemeris": "DE441",
+            "centerFrame": "MEAN_ME (high precision)",
+            "radiusKm": 1737.4,
+            "timeScale": "UTC",
+            "queryUrl": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%2710%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2790%2C-89%2C0%27&START_TIME=%272026-11-14+00%3A00%27&STOP_TIME=%272026-11-21+00%3A00%27&STEP_SIZE=%2760+m%27&QUANTITIES=%274%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&TIME_DIGITS=%27MINUTES%27&TIME_TYPE=%27UT%27&CAL_TYPE=%27GREGORIAN%27&APPARENT=%27AIRLESS%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27YES%27&ELEV_CUT=%27-90%27&SKIP_DAYLT=%27NO%27",
+            "retrievedUtc": "2026-11-14T16:45:19.935Z"
+          }
+        },
+        "earth": {
+          "status": "ready",
+          "samples": 169,
+          "visibleHours": 77.6002625,
+          "firstElevationDeg": -4.669006219,
+          "windows": [
+            {
+              "startUtc": "2026-11-17T18:23:59.055Z",
+              "endUtc": "2026-11-21T00:00:00.000Z",
+              "openStart": false,
+              "openEnd": true
+            }
+          ],
+          "provenance": {
+            "source": "NASA/JPL Horizons API",
+            "apiVersion": "1.2",
+            "ephemeris": "DE441",
+            "centerFrame": "MEAN_ME (high precision)",
+            "radiusKm": 1737.4,
+            "timeScale": "UTC",
+            "queryUrl": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27399%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2790%2C-89%2C0%27&START_TIME=%272026-11-14+00%3A00%27&STOP_TIME=%272026-11-21+00%3A00%27&STEP_SIZE=%2760+m%27&QUANTITIES=%274%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&TIME_DIGITS=%27MINUTES%27&TIME_TYPE=%27UT%27&CAL_TYPE=%27GREGORIAN%27&APPARENT=%27AIRLESS%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27YES%27&ELEV_CUT=%27-90%27&SKIP_DAYLT=%27NO%27",
+            "retrievedUtc": "2026-11-14T16:45:20.569Z"
+          }
+        }
+      }
+    }
+  ],
+  "verification": {
+    "realProviderResponses": 2,
+    "nextSampleUtcVerified": true,
+    "reportDownloaded": true,
+    "pageErrors": []
+  },
+  "screenshots": [
+    "01-explorer.png",
+    "02-enter-coordinates.png",
+    "03-candidates.png",
+    "04-shared-settings.png",
+    "05-sun-comparison.png",
+    "06-earth-comparison.png",
+    "07-visibility-windows.png",
+    "08-source-details.png",
+    "09-methodology.png",
+    "10-team.png"
+  ]
+}
